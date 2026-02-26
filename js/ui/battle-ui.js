@@ -40,7 +40,7 @@ function startBattleScreen(opts) {
   enqueueBattleMessage(msg);
   enqueueBattleMessage(`いけ！ ${Battle.playerMon.name}！`);
 
-  // コマンド表示
+  // コマンド表示処理へ
   startMessageProcessing();
 }
 
@@ -60,13 +60,9 @@ function processNextMessage() {
     if (Battle && !Battle.ended) {
       if (Battle.needSwitch) {
         showSwitchCommand();
-      } else if (!battleInputLock) {
-        showMainCommand();
       } else {
-        setTimeout(() => {
-          battleInputLock = false;
-          if (Battle && !Battle.ended) showMainCommand();
-        }, 300);
+        battleInputLock = false;
+        showMainCommand();
       }
     }
     return;
@@ -105,6 +101,7 @@ function updateBattleUI() {
   if (!Battle) return;
   updateMonUI('enemy', Battle.enemyMon);
   updateMonUI('player', Battle.playerMon);
+  // ※エラーの原因だった updateBattleCommands() を完全に削除
 }
 
 function updateMonUI(side, mon) {
@@ -225,7 +222,6 @@ function renderFightPanel() {
     const typeBadge = move ? `<span class="type-badge ${getTypeClass(move.type)}">${move.type}</span>` : '';
     btn.innerHTML = `${moveName}<br><small>${typeBadge} PP:${pp}/${move?.pp || '?'}</small>`;
 
-    // タイプ色でボーダー
     if (move) {
       const typeColors = {
         'ぷゆ':'#ff6ec7','ほのお':'#e8602c','みず':'#4c90d2','くさ':'#62b945',
@@ -246,17 +242,13 @@ function renderFightPanel() {
 function onMoveSelect(moveName, move) {
   if (move) {
     document.getElementById('move-type-display').textContent = move.type;
-    document.getElementById('move-pp-display').textContent =
-      `${Battle.playerMon.movePPs[moveName] || 0}/${move.pp}`;
-    document.getElementById('move-power-display').textContent =
-      move.power > 0 ? move.power : '---';
+    document.getElementById('move-pp-display').textContent = `${Battle.playerMon.movePPs[moveName] || 0}/${move.pp}`;
+    document.getElementById('move-power-display').textContent = move.power > 0 ? move.power : '---';
   }
-  // 単クリックで選択 → ダブルクリック or 再クリックで実行
   if (Battle._selectedMove === moveName) {
     executePlayerMove(moveName);
   } else {
     Battle._selectedMove = moveName;
-    // 少し待ってから自動実行（シングルタップ対応）
     setTimeout(() => {
       if (Battle._selectedMove === moveName) executePlayerMove(moveName);
     }, 600);
@@ -268,9 +260,7 @@ async function executePlayerMove(moveName) {
   battleInputLock = true;
   Battle._selectedMove = null;
   hideAllCommandPanels();
-  showBattleMessage(`${Battle.playerMon.name}の ${moveName}！`);
   await executeTurn('move', moveName);
-  battleInputLock = false;
   if (!Battle?.ended) processNextMessage();
 }
 
@@ -322,16 +312,56 @@ async function executePlayerItem(itemName) {
   battleInputLock = true;
   hideAllCommandPanels();
   await executeTurn('item', itemName);
-  battleInputLock = false;
   if (!Battle?.ended) processNextMessage();
 }
 
+// =====================================================
+// ボール投擲処理 (新規追加)
+// =====================================================
 async function executePlayerBall(ballName) {
   if (battleInputLock || !Battle) return;
   battleInputLock = true;
   hideAllCommandPanels();
-  battleInputLock = false;
-  await throwBall(ballName);
+
+  const item = ITEMS[ballName];
+  if (!item || !Game.bag[ballName]) {
+    battleInputLock = false;
+    return;
+  }
+  
+  Game.bag[ballName]--;
+  enqueueBattleMessage(`${Game.player.name} は ${ballName} を投げた！`);
+
+  const catchRate = calcCatchProbability(Battle.enemyMon, ballName, Battle.turn);
+  let caught = true;
+  
+  // 3回揺れる判定のシミュレート
+  for(let i=0; i<3; i++) {
+     if (Math.random() > catchRate && catchRate < 1) {
+         caught = false;
+         break;
+     }
+  }
+
+  if (!caught) {
+     enqueueBattleMessage('だめだ！ ぷゆモンが ボールから抜け出した！');
+     // 捕獲失敗時は敵のターンを実行する
+     const enemyAction = decideEnemyAction();
+     await executeAction('enemy', enemyAction);
+     if (!Battle.ended) await processTurnEnd();
+  } else {
+     enqueueBattleMessage(`やったー！ ${Battle.enemyMon.name} を捕まえたぞ！`);
+     catchPuyuMon(Battle.enemyMon.speciesId);
+     const result = addToBox(Battle.enemyMon);
+     if (result) {
+         enqueueBattleMessage(`${Battle.enemyMon.name} は ボックスに転送された！`);
+     } else {
+         enqueueBattleMessage(`ボックスがいっぱいで 逃がしてしまった…`);
+     }
+     Battle.captured = true;
+     endBattle('captured');
+  }
+
   if (!Battle?.ended) processNextMessage();
 }
 
@@ -348,7 +378,6 @@ function renderPartyBattleList(forceSwitch = false) {
     const btn = document.createElement('button');
     btn.className = 'party-battle-slot';
     const hpRatio = mon.maxHp > 0 ? mon.currentHp / mon.maxHp : 0;
-    const hpClass = hpRatio > 0.5 ? '' : hpRatio > 0.25 ? 'yellow' : 'red';
     const base = getPuyuMonBase(mon.speciesId);
     const icon = base ? base.icon : '❓';
 
@@ -384,21 +413,17 @@ async function onPartySwitchSelect(partyIndex, forceSwitch) {
   hideAllCommandPanels();
 
   if (forceSwitch) {
-    // 強制交代
     const newMon = Game.party[partyIndex];
     resetBattleMonState(Battle.playerMon);
     Battle.playerPartyIndex = partyIndex;
     Battle.playerMon = newMon;
-    resetBattleMonState(newMon);
     triggerAbilityOnEntry(newMon, Battle);
-    addMessage(`いけ！${newMon.name}！`);
+    enqueueBattleMessage(`いけ！${newMon.name}！`);
     Battle.needSwitch = false;
     updateBattleUI();
-    battleInputLock = false;
-    setTimeout(processNextMessage, 300);
+    processNextMessage();
   } else {
     await executeTurn('switch', partyIndex);
-    battleInputLock = false;
     if (!Battle?.ended) processNextMessage();
   }
 }
@@ -411,7 +436,6 @@ async function executeRun() {
   battleInputLock = true;
   hideAllCommandPanels();
   await executeTurn('run', null);
-  battleInputLock = false;
   if (!Battle?.ended) processNextMessage();
 }
 
@@ -426,7 +450,6 @@ function updateBattleBg() {
     'linear-gradient(180deg, #1a1a2e 0%, #1a1a2e 50%, #2a2a1a 50%, #1a1a0a 100%)',
     'linear-gradient(180deg, #ffd700 0%, #87CEEB 40%, #c8a050 60%, #8b6914 100%)',
     'linear-gradient(180deg, #4466aa 0%, #334488 45%, #4a5a6a 45%, #3a4a5a 100%)',
-    'linear-gradient(180deg, #2a1a3e 0%, #1a0a2e 50%, #3a2a1a 50%, #2a1a0a 100%)',
   ];
   const idx = Math.floor(Math.random() * bgs.length);
   bg.style.background = bgs[idx];
@@ -438,13 +461,20 @@ function updateBattleBg() {
 function handleBattleEnd(result) {
   battleInputLock = true;
 
-  setTimeout(() => {
+  // 全てのメッセージの描画が終わるまで待機してからリザルトを出す
+  const checkEnd = () => {
+    if (messageQueue.length > 0 || isShowingMessage) {
+      setTimeout(checkEnd, 500);
+      return;
+    }
+    
     hideAllCommandPanels();
-
     if (result === 'win') {
       showOverlayMsg(`🎉 バトルに勝った！\n${Battle.trainer ? `${Battle.trainer.name}に勝利！` : ''}`);
     } else if (result === 'lose') {
-      showOverlayMsg(`😭 全てのぷゆモンがたおれた…\nお金が半分になった。\nぷゆモンは全回復した。`);
+      showOverlayMsg(`😭 全てのぷゆモンがたおれた…\nお金が少し減った。\nぷゆモンは全回復した。`);
+      // 敗北時の回復処理
+      Game.party.forEach(m => { if(m) m.currentHp = m.maxHp; });
     } else if (result === 'escaped') {
       showOverlayMsg('💨 逃げ出した！');
     } else if (result === 'captured') {
@@ -458,14 +488,15 @@ function handleBattleEnd(result) {
       updateMainMenu();
       Battle = null;
     };
-  }, 500);
+  };
+
+  setTimeout(checkEnd, 500);
 }
 
 // =====================================================
 // バトルUI イベントリスナー設定
 // =====================================================
 function setupBattleUIEvents() {
-  // たたかう
   document.getElementById('cmd-fight')?.addEventListener('click', () => {
     if (battleInputLock || !Battle?.playerMon) return;
     renderFightPanel();
@@ -478,7 +509,6 @@ function setupBattleUIEvents() {
     showMainCommand();
   });
 
-  // どうぐ
   document.getElementById('cmd-bag')?.addEventListener('click', () => {
     if (battleInputLock) return;
     renderBagPanel();
@@ -491,7 +521,6 @@ function setupBattleUIEvents() {
     showMainCommand();
   });
 
-  // バッグタブ切り替え
   document.querySelectorAll('.bag-tab').forEach(tab => {
     tab.addEventListener('click', () => {
       document.querySelectorAll('.bag-tab').forEach(t => t.classList.remove('active'));
@@ -500,7 +529,6 @@ function setupBattleUIEvents() {
     });
   });
 
-  // ぷゆモン
   document.getElementById('cmd-pokemon')?.addEventListener('click', () => {
     if (battleInputLock) return;
     renderPartyBattleList(false);
@@ -513,13 +541,11 @@ function setupBattleUIEvents() {
     showMainCommand();
   });
 
-  // にげる
   document.getElementById('cmd-run')?.addEventListener('click', () => {
     if (battleInputLock) return;
     executeRun();
   });
 
-  // メッセージボックスクリックで早送り
   document.getElementById('battle-message-box')?.addEventListener('click', () => {
     if (battleMessageTimer) {
       clearTimeout(battleMessageTimer);
