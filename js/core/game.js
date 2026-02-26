@@ -559,16 +559,15 @@ function initNewGame(playerName) {
   Game.flags = {};
   Game.stats = { battles: 0, wins: 0, captures: 0, stepsWalked: 0 };
   Game.startTime = Date.now();
-
-  // スターターぷゆモンを3匹から1匹選ぶ（仮：最初はランダムに1匹追加）
-  // 実際のゲームではスターター選択画面を実装
   if (typeof PUYUMON_DATA !== 'undefined') {
-    const starters = ['puyuyu', 'uyuyu', 'peyuyu'];
-    const availableStarters = starters.filter(s => PUYUMON_DATA[s]);
-    if (availableStarters.length > 0) {
-      const starterId = availableStarters[0];
-      const starter = createPuyuMon(starterId, 5);
-      if (starter) addToParty(starter);
+    if (PUYUMON_DATA['puyuyu']) {
+      const starter = createPuyuMon('puyuyu', 5); // ぷゆゆ、レベル5を指定
+      if (starter) {
+        starter.currentHp = starter.maxHp; // HPを確実に満タンにする
+        addToParty(starter);
+      }
+    } else {
+      console.error('エラー: ぷゆゆ(puyuyu)のデータが見つかりません。');
     }
   }
 }
