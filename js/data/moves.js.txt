@@ -3838,3 +3838,327 @@ const MOVES = {
       { trigger: 'always', chance: 100, target: 'self', action: 'ignoreEvasion' }
     ]
   },
+  'たいようのめぐみ': {
+    name: 'たいようのめぐみ', type: 'ぷゆ', category: 'status',
+    power: 0, accuracy: 0, pp: 5,
+    desc: '太郎の恵み。HP1/2回復し状態異常も治す。',
+    effect: [
+      { trigger: 'use', chance: 100, target: 'self', action: 'healPercent', value: 50 },
+      { trigger: 'use', chance: 100, target: 'self', action: 'cureStatus' }
+    ]
+  },
+  'トランスチェンジ': {
+    name: 'トランスチェンジ', type: 'ノーマル', category: 'status',
+    power: 0, accuracy: 0, pp: 10,
+    desc: 'こうげきととくこうの実数値を入れ替える。',
+    effect: [
+      { trigger: 'use', chance: 100, target: 'self', action: 'swapAtkSpa' }
+    ]
+  },
+  'しゃかいじんのつとめ': {
+    name: 'しゃかいじんのつとめ', type: 'しゃかい', category: 'physical',
+    power: 75, accuracy: 100, pp: 15, contact: true,
+    desc: '社会人の務め。毎ターン使うと威力+10（最大200）。',
+    effect: [
+      { trigger: 'use', chance: 100, target: 'self', action: 'growingPower', value: 10, max: 200 }
+    ]
+  },
+  'アンノーンパルス': {
+    name: 'アンノーンパルス', type: 'げんそう', category: 'special',
+    power: 60, accuracy: 100, pp: 20,
+    desc: '未知の波動。タイプがランダムに変わる。',
+    effect: [
+      { trigger: 'always', chance: 100, target: 'self', action: 'randomMoveType' }
+    ]
+  },
+  'うゆゆのうた': {
+    name: 'うゆゆのうた', type: 'ぷゆ', category: 'status',
+    power: 0, accuracy: 55, pp: 15, sound: true,
+    desc: '不思議な歌で相手を眠らせる。',
+    effect: [
+      { trigger: 'use', chance: 100, target: 'enemy', action: 'inflictStatus', status: 'slp' }
+    ]
+  },
+  'にせものアタック': {
+    name: 'にせものアタック', type: 'あく', category: 'physical',
+    power: 70, accuracy: 100, pp: 15, contact: true,
+    desc: '偽物の攻撃。相手の最後に使った技をコピー。',
+    effect: [
+      { trigger: 'hit', chance: 100, target: 'self', action: 'copyLastMove' }
+    ]
+  },
+  'ほんもののちから': {
+    name: 'ほんもののちから', type: 'ぷゆ', category: 'special',
+    power: 95, accuracy: 100, pp: 10,
+    desc: '本物の力。効果抜群の倍率がさらにUP。',
+    effect: [
+      { trigger: 'always', chance: 100, target: 'self', action: 'superEffectBoost', mult: 1.5 }
+    ]
+  },
+  'きょうふのかお': {
+    name: 'きょうふのかお', type: 'ゴースト', category: 'status',
+    power: 0, accuracy: 100, pp: 10,
+    desc: '恐怖の顔。すばやさ2段階DOWN。',
+    effect: [
+      { trigger: 'use', chance: 100, target: 'enemy', action: 'statChange', stat: 'spe', stage: -2 }
+    ]
+  },
+  'むてきのえがお': {
+    name: 'むてきのえがお', type: 'ぷゆ', category: 'status',
+    power: 0, accuracy: 100, pp: 10,
+    desc: '無敵の笑顔。相手のこうげき2段階DOWN。',
+    effect: [
+      { trigger: 'use', chance: 100, target: 'enemy', action: 'statChange', stat: 'atk', stage: -2 }
+    ]
+  },
+  'ぼくちんのゆうき': {
+    name: 'ぼくちんのゆうき', type: 'ぷゆ', category: 'status',
+    power: 0, accuracy: 0, pp: 5,
+    desc: 'ぼくちんの勇気。HP1/4以下で全能力2段階UP。',
+    effect: [
+      { trigger: 'use', chance: 100, target: 'self', action: 'pinchAllUp', threshold: 0.25, stage: 2 }
+    ]
+  },
+  'おうごんパンチ': {
+    name: 'おうごんパンチ', type: 'ぷゆ', category: 'physical',
+    power: 100, accuracy: 95, pp: 5, contact: true, punch: true,
+    desc: '黄金の拳。20%でこうげきUP（自分）。',
+    effect: [
+      { trigger: 'hit', chance: 20, target: 'self', action: 'statChange', stat: 'atk', stage: 1 }
+    ]
+  },
+  'パブロのほりあげ': {
+    name: 'パブロのほりあげ', type: 'じめん', category: 'physical',
+    power: 80, accuracy: 100, pp: 15,
+    desc: 'スコップで掘り上げる。空を飛んでいる相手にも当たる。',
+    effect: [
+      { trigger: 'always', chance: 100, target: 'self', action: 'hitFlying' }
+    ]
+  },
+  'しんかのひかり': {
+    name: 'しんかのひかり', type: 'ぷゆ', category: 'status',
+    power: 0, accuracy: 0, pp: 5,
+    desc: '進化の光。こうげき・とくこう・すばやさ1段階UP。',
+    effect: [
+      { trigger: 'use', chance: 100, target: 'self', action: 'statChange', stat: 'atk', stage: 1 },
+      { trigger: 'use', chance: 100, target: 'self', action: 'statChange', stat: 'spa', stage: 1 },
+      { trigger: 'use', chance: 100, target: 'self', action: 'statChange', stat: 'spe', stage: 1 }
+    ]
+  },
+  'にんじゃきりさき': {
+    name: 'にんじゃきりさき', type: 'あく', category: 'physical',
+    power: 70, accuracy: 100, pp: 15, contact: true,
+    desc: '忍者の斬撃。急所率UP。100%すばやさ1段階UP（自分）。',
+    critRateBonus: 1,
+    effect: [
+      { trigger: 'use', chance: 100, target: 'self', action: 'statChange', stat: 'spe', stage: 1 }
+    ]
+  },
+  'にんじゃしゅりけん': {
+    name: 'にんじゃしゅりけん', type: 'あく', category: 'physical',
+    power: 15, accuracy: 100, pp: 20, priority: 1,
+    desc: '忍者の手裏剣。2〜5回先制攻撃。',
+    multiHit: [2, 5],
+    effect: []
+  },
+  'さいぼうぶんれつ': {
+    name: 'さいぼうぶんれつ', type: 'ぷゆ', category: 'status',
+    power: 0, accuracy: 0, pp: 5,
+    desc: '自分のHP30%を消費してみがわりを作る。みがわりのHPは消費分と同じ。',
+    effect: [
+      { trigger: 'use', chance: 100, target: 'self', action: 'cellSplitSub', value: 30 }
+    ]
+  },
+  'じかんのほうてき': {
+    name: 'じかんのほうてき', type: 'エスパー', category: 'special',
+    power: 80, accuracy: 100, pp: 10,
+    desc: '時間の法則。ターン数に応じて威力UP（最大200）。',
+    effect: [
+      { trigger: 'always', chance: 100, target: 'self', action: 'turnDamage', multiplier: 10, base: 80, max: 200 }
+    ]
+  },
+  'ぷゆゆゼロ': {
+    name: 'ぷゆゆゼロ', type: 'ぷゆ', category: 'special',
+    power: 100, accuracy: 100, pp: 5,
+    desc: 'ゼロの力で攻撃。100%相手と自分の能力変化リセット。',
+    effect: [
+      { trigger: 'hit', chance: 100, target: 'self', action: 'clearStatChanges' },
+      { trigger: 'hit', chance: 100, target: 'enemy', action: 'clearStatChanges' }
+    ]
+  },
+  'ぷゆムーンレイ': {
+    name: 'ぷゆムーンレイ', type: 'ぷゆ', category: 'special',
+    power: 95, accuracy: 100, pp: 10,
+    desc: '月光のビーム。30%でとくぼうDOWN（相手）。',
+    effect: [
+      { trigger: 'hit', chance: 30, target: 'enemy', action: 'statChange', stat: 'spd', stage: -1 }
+    ]
+  },
+  'ロールシャッハインク': {
+    name: 'ロールシャッハインク', type: 'エスパー', category: 'special',
+    power: 65, accuracy: 100, pp: 15,
+    desc: 'インクを投げつける。50%で混乱 or 50%でこうげきDOWN。',
+    effect: [
+      { trigger: 'hit', chance: 50, target: 'enemy', action: 'confuse' },
+      { trigger: 'hit', chance: 50, target: 'enemy', action: 'statChange', stat: 'atk', stage: -1 }
+    ]
+  },
+  'くろきりのいちげき': {
+    name: 'くろきりのいちげき', type: 'ゴースト', category: 'physical',
+    power: 80, accuracy: 100, pp: 15, contact: true,
+    desc: '黒霧からの一撃。100%回避率1段階UP（自分）。',
+    effect: [
+      { trigger: 'use', chance: 100, target: 'self', action: 'statChange', stat: 'eva', stage: 1 }
+    ]
+  },
+  'だれのこうげき': {
+    name: 'だれのこうげき', type: 'ゴースト', category: 'special',
+    power: 75, accuracy: 100, pp: 15,
+    desc: '正体不明の攻撃。追加効果がランダム。',
+    effect: [
+      { trigger: 'hit', chance: 100, target: 'enemy', action: 'randomSecondary' }
+    ]
+  },
+  'ぷゆばばのじゅもん': {
+    name: 'ぷゆばばのじゅもん', type: 'げんそう', category: 'special',
+    power: 85, accuracy: 90, pp: 10,
+    desc: 'ぷ湯婆婆の呪文。50%で混乱。',
+    effect: [
+      { trigger: 'hit', chance: 50, target: 'enemy', action: 'confuse' }
+    ]
+  },
+  'うんこスプラッシュ': {
+    name: 'うんこスプラッシュ', type: 'どく', category: 'special',
+    power: 85, accuracy: 90, pp: 10,
+    desc: '汚物攻撃。100%どく。フィールドにどくびしを1枚まく。',
+    effect: [
+      { trigger: 'hit', chance: 100, target: 'enemy', action: 'inflictStatus', status: 'psn' },
+      { trigger: 'hit', chance: 100, target: 'field', action: 'setField', field: 'toxicSpikes', value: 1 }
+    ]
+  },
+  'たかしのUFO': {
+    name: 'たかしのUFO', type: 'ひこう', category: 'special',
+    power: 90, accuracy: 95, pp: 10,
+    desc: 'UFOからのビーム。20%で混乱。',
+    effect: [
+      { trigger: 'hit', chance: 20, target: 'enemy', action: 'confuse' }
+    ]
+  },
+  'てんしのはね': {
+    name: 'てんしのはね', type: 'フェアリー', category: 'status',
+    power: 0, accuracy: 0, pp: 5,
+    desc: '天使の羽根。HP1/2回復し状態異常も治す。',
+    effect: [
+      { trigger: 'use', chance: 100, target: 'self', action: 'healPercent', value: 50 },
+      { trigger: 'use', chance: 100, target: 'self', action: 'cureStatus' }
+    ]
+  },
+  'あくまのけいやくしょ': {
+    name: 'あくまのけいやくしょ', type: 'あく', category: 'special',
+    power: 110, accuracy: 90, pp: 5,
+    desc: '悪魔の契約書。50%で相手の特性を無効化する。',
+    effect: [
+      { trigger: 'hit', chance: 50, target: 'enemy', action: 'setFlag', flag: 'abilityDisabled', value: true }
+    ]
+  },
+  'くりのいがショット': {
+    name: 'くりのいがショット', type: 'くさ', category: 'physical',
+    power: 60, accuracy: 100, pp: 20,
+    desc: '栗のイガを飛ばす。接触した相手に追加ダメージ。',
+    effect: [
+      { trigger: 'hit', chance: 100, target: 'enemy', action: 'contactDamage', value: 8 }
+    ]
+  },
+  'にっけいぷゆキック': {
+    name: 'にっけいぷゆキック', type: 'かくとう', category: 'physical',
+    power: 75, accuracy: 100, pp: 15, contact: true,
+    desc: '日系人の蹴り。',
+    effect: []
+  },
+  'ぼうつきぷゆアタック': {
+    name: 'ぼうつきぷゆアタック', type: 'ぷゆ', category: 'physical',
+    power: 70, accuracy: 100, pp: 15, contact: true,
+    desc: '棒つきの全身攻撃。急所率UP。',
+    critRateBonus: 1,
+    effect: []
+  },
+  'ファンタストビーム': {
+    name: 'ファンタストビーム', type: 'げんそう', category: 'special',
+    power: 90, accuracy: 95, pp: 10,
+    desc: 'ファンタストの光線。20%でとくぼうDOWN。',
+    effect: [
+      { trigger: 'hit', chance: 20, target: 'enemy', action: 'statChange', stat: 'spd', stage: -1 }
+    ]
+  },
+  'にんにくバースト': {
+    name: 'にんにくバースト', type: 'くさ', category: 'special',
+    power: 80, accuracy: 95, pp: 10,
+    desc: 'にんにくの臭気で攻撃。30%でこうげきDOWN（相手）。',
+    effect: [
+      { trigger: 'hit', chance: 30, target: 'enemy', action: 'statChange', stat: 'atk', stage: -1 }
+    ]
+  },
+  'ペンギンダイブ': {
+    name: 'ペンギンダイブ', type: 'こおり', category: 'physical',
+    power: 85, accuracy: 100, pp: 10, contact: true,
+    desc: 'ペンギン博士の飛び込み。100%すばやさ1段階UP（自分）。',
+    effect: [
+      { trigger: 'use', chance: 100, target: 'self', action: 'statChange', stat: 'spe', stage: 1 }
+    ]
+  },
+  'ぼうしトリック': {
+    name: 'ぼうしトリック', type: 'エスパー', category: 'status',
+    power: 0, accuracy: 100, pp: 10,
+    desc: '帽子を使ったトリック。100%相手と自分の持ち物を入れ替える。',
+    effect: [
+      { trigger: 'use', chance: 100, target: 'enemy', action: 'swapItems' }
+    ]
+  },
+  'いみんのちから': {
+    name: 'いみんのちから', type: 'かくとう', category: 'physical',
+    power: 85, accuracy: 100, pp: 10, contact: true,
+    desc: '移民の底力。HP1/2以下で威力1.5倍。',
+    effect: [
+      { trigger: 'always', chance: 100, target: 'self', action: 'pinchBoost', threshold: 0.5, mult: 1.5 }
+    ]
+  },
+  'ふういんのもんしょう': {
+    name: 'ふういんのもんしょう', type: 'げんそう', category: 'status',
+    power: 0, accuracy: 100, pp: 5,
+    desc: '封印の紋章。100%相手の技を2つ3ターン封じる。',
+    effect: [
+      { trigger: 'use', chance: 100, target: 'enemy', action: 'disableTwo', value: 3 }
+    ]
+  },
+  'ぴえんのなみだ': {
+    name: 'ぴえんのなみだ', type: 'みず', category: 'special',
+    power: 75, accuracy: 100, pp: 15,
+    desc: 'ぴえんの大粒の涙。100%とくこうDOWN（相手）。',
+    effect: [
+      { trigger: 'hit', chance: 100, target: 'enemy', action: 'statChange', stat: 'spa', stage: -1 }
+    ]
+  },
+  'とくこのへや': {
+    name: 'とくこのへや', type: 'ぷゆ', category: 'status',
+    power: 0, accuracy: 0, pp: 5,
+    desc: '徹子の部屋。5ターンの間味方のHP1/16毎ターン回復。',
+    effect: [
+      { trigger: 'use', chance: 100, target: 'field', action: 'setField', field: 'healingRoom', value: 5 }
+    ]
+  },
+  'うまのひづめ': {
+    name: 'うまのひづめ', type: 'じめん', category: 'physical',
+    power: 85, accuracy: 95, pp: 10, contact: true,
+    desc: '馬の蹄で蹴る。30%ひるみ。',
+    effect: [
+      { trigger: 'hit', chance: 30, target: 'enemy', action: 'flinch' }
+    ]
+  },
+};
+
+// =====================================================
+// ユーティリティ
+// =====================================================
+function getMoveNames() {
+  return Object.keys(MOVES);
+}
