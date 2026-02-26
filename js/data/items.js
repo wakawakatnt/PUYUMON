@@ -11,12 +11,12 @@ const ITEMS = {
   },
   'スーパーぷゆボール': {
     name: 'スーパーぷゆボール', icon: '🔵', category: 'ball',
-    price: 350, catchRate: 1.5,
+    price: 400, catchRate: 1.5,
     desc: '少し性能が良いぷゆボール。捕獲率×1.5。',
   },
   'ハイパーぷゆボール': {
     name: 'ハイパーぷゆボール', icon: '🟡', category: 'ball',
-    price: 550, catchRate: 2.0,
+    price: 600, catchRate: 2.0,
     desc: '高性能ぷゆボール。捕獲率×2.0。',
   },
   'マスターぷゆボール': {
