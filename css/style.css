@@ -1,3 +1,4 @@
+
 /* =====================================================
    ぷゆモン - メインスタイルシート
    ===================================================== */
@@ -977,7 +978,7 @@ html, body {
 @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
 
 /* =====================================================
-   育成編集画面
+   育成編集画面 (独自技選択UI・努力値UI)
    ===================================================== */
 #screen-edit {
   background: linear-gradient(160deg, var(--bg-dark), #1a1a3e);
@@ -1001,42 +1002,6 @@ html, body {
 }
 .edit-section h3 { font-size: 15px; margin-bottom: 10px; color: var(--accent2); }
 
-.stat-edit-row {
-  display: flex; align-items: center; gap: 8px; margin-bottom: 6px;
-}
-.stat-edit-row label { min-width: 80px; font-size: 13px; color: var(--text-sub); }
-.stat-edit-row input[type=range] { flex: 1; accent-color: var(--accent1); }
-.stat-edit-row span { min-width: 40px; text-align: right; font-size: 13px; font-weight: 700; }
-.stat-edit-row input[type=number] {
-  width: 60px; background: rgba(255,255,255,0.1);
-  border: 1px solid var(--border-color); border-radius: 4px;
-  color: var(--text-main); font-family: inherit; font-size: 13px;
-  padding: 3px 6px; text-align: center;
-}
-
-.move-slot-edit {
-  display: grid; grid-template-columns: 1fr 1fr;
-  gap: 6px;
-}
-.move-select {
-  background: rgba(255,255,255,0.1);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  color: var(--text-main); font-family: inherit;
-  font-size: 13px; padding: 6px 10px;
-  width: 100%;
-}
-.move-select option { background: var(--bg-mid); }
-
-.nature-select, .ability-select, .item-select {
-  background: rgba(255,255,255,0.1);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  color: var(--text-main); font-family: inherit;
-  font-size: 14px; padding: 8px 12px; width: 100%;
-}
-.nature-select option, .ability-select option, .item-select option { background: var(--bg-mid); }
-
 .edit-save-btn {
   background: linear-gradient(135deg, #44aa44, #228822);
   border: none; border-radius: var(--radius);
@@ -1045,6 +1010,86 @@ html, body {
   width: 100%; transition: all 0.15s;
 }
 .edit-save-btn:hover { transform: translateY(-2px); }
+
+.edit-move-slots-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.edit-move-slot {
+  background: rgba(255,255,255,0.08);
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  padding: 12px 6px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: inset 0 0 10px rgba(0,0,0,0.2);
+}
+.edit-move-slot.selected {
+  background: rgba(255,110,199,0.2);
+  border-color: var(--accent1);
+  box-shadow: 0 0 12px rgba(255,110,199,0.6);
+  transform: scale(1.02);
+}
+.edit-move-slot:hover {
+  background: rgba(255,255,255,0.15);
+}
+.edit-move-slot.empty {
+  border-style: dashed;
+  color: var(--text-sub);
+}
+.edit-move-pool {
+  background: rgba(0,0,0,0.2);
+  padding: 10px;
+  border-radius: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-height: 150px;
+  overflow-y: auto;
+}
+.edit-pool-btn {
+  background: var(--bg-mid);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  color: white;
+  padding: 8px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.edit-pool-btn:hover:not(:disabled) {
+  background: var(--accent1);
+  transform: translateY(-2px);
+}
+.edit-pool-btn.equipped {
+  opacity: 0.4;
+  border-color: #555;
+  background: #333;
+  cursor: not-allowed;
+}
+
+.ev-up-btn {
+  background: linear-gradient(135deg, #44aa44, #228822);
+  border: none;
+  border-radius: 4px;
+  color: white;
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+.ev-up-btn:hover:not(:disabled) {
+  transform: scale(1.05);
+}
+.ev-up-btn.disabled {
+  background: #444;
+  color: #888;
+  cursor: not-allowed;
+}
 
 /* =====================================================
    バトルアニメーション
