@@ -121,7 +121,7 @@ const NATURES = {
   'すばしっこい':{ up: 'spe', down: 'atk' },
   'せっかち':   { up: 'spe', down: 'def' },
   'ようき':     { up: 'spe', down: 'spa' },
-  'むじゃき2':  { up: 'spe', down: 'spd' },
+  'なまいき':  { up: 'spe', down: 'spd' },
   'おくびょう': { up: 'spe', down: 'atk' },
   // 補正なし性格
   'てれや':     { up: null, down: null },
