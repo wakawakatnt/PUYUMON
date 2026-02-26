@@ -1,4 +1,3 @@
-
 // =====================================================
 // ぷゆモン - ステータス詳細 & 全体一覧 & 育成画面
 // =====================================================
@@ -79,7 +78,7 @@ function renderStatusContent() {
   const expGroup = base ? base.expGroup : 'medium';
   const expToNext = mon.level < 100 ? calcExpToNextLevel(expGroup, mon.level) : 0;
   const currentLvExp = calcExpForLevel(expGroup, mon.level);
-  const nextLvExp = calcExpForLevel(expGroup, mon.level + 1);
+  const nextLvExp = calcExpForLevel(group, mon.level + 1);
   const expProgress = mon.level >= 100 ? 100 :
     nextLvExp > currentLvExp ? Math.round((mon.exp - currentLvExp) / (nextLvExp - currentLvExp) * 100) : 0;
 
@@ -207,7 +206,6 @@ function renderStatusAllTable(sortKey = 'id') {
 
     const row = document.createElement('tr');
 
-    // 捕獲済みは強調
     if (dexEntry.caught) row.style.color = '#aaffaa';
     else if (dexEntry.seen) row.style.color = 'inherit';
     else row.style.opacity = '0.5';
@@ -231,7 +229,6 @@ function renderStatusAllTable(sortKey = 'id') {
       <td style="font-size:11px">${dexEntry.caught ? 'ゲット' : dexEntry.seen ? '発見' : '未発見'}</td>
     `;
 
-    // クリックで詳細
     row.style.cursor = 'pointer';
     row.onclick = () => {
       if (dexEntry.seen) {
@@ -262,7 +259,6 @@ function setupStatusAllEvents() {
     renderStatusAllTable(e.target.value);
   });
 
-  // テーブルヘッダークリックソート
   document.querySelectorAll('.status-all-table th').forEach((th, index) => {
     const sortKeys = ['id', 'name', null, null, 'hp', 'atk', 'def', 'spa', 'spd', 'spe', 'total', null, null];
     const key = sortKeys[index];
@@ -334,7 +330,7 @@ function renderEditContent(partyIndex) {
     const isEquipped = mon.moves.includes(m);
     return `
       <button class="edit-pool-btn ${isEquipped ? 'equipped' : ''}" onclick="learnMoveToSlot(${partyIndex}, '${m}')" ${isEquipped ? 'disabled' : ''}>
-        ${m} <span style="font-size:10px">(${MOVES[m]?.type})</span>
+        ${m} <span style="font-size:10px">(${MOVES[m]?.type || 'ノーマル'})</span>
       </button>
     `;
   }).join('');
