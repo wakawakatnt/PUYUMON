@@ -11,12 +11,12 @@ const ITEMS = {
   },
   'スーパーぷゆボール': {
     name: 'スーパーぷゆボール', icon: '🔵', category: 'ball',
-    price: 600, catchRate: 1.5,
+    price: 350, catchRate: 1.5,
     desc: '少し性能が良いぷゆボール。捕獲率×1.5。',
   },
   'ハイパーぷゆボール': {
     name: 'ハイパーぷゆボール', icon: '🟡', category: 'ball',
-    price: 1200, catchRate: 2.0,
+    price: 550, catchRate: 2.0,
     desc: '高性能ぷゆボール。捕獲率×2.0。',
   },
   'マスターぷゆボール': {
@@ -80,9 +80,34 @@ const ITEMS = {
     desc: 'HPを120回復する。',
     effect: { type: 'heal', amount: 120 }
   },
+    // ===== 努力値(EV)アップアイテム =====
+  'マックスアップ': {
+    name: 'マックスアップ', icon: '💊', category: 'medicine',
+    price: 1000, desc: 'HPの努力値を10上げる。'
+  },
+  'タウリン': {
+    name: 'タウリン', icon: '💊', category: 'medicine',
+    price: 1000, desc: 'こうげきの努力値を10上げる。'
+  },
+  'ブロムヘキシン': {
+    name: 'ブロムヘキシン', icon: '💊', category: 'medicine',
+    price: 1000, desc: 'ぼうぎょの努力値を10上げる。'
+  },
+  'リゾチウム': {
+    name: 'リゾチウム', icon: '💊', category: 'medicine',
+    price: 1000, desc: 'とくこうの努力値を10上げる。'
+  },
+  'キトサン': {
+    name: 'キトサン', icon: '💊', category: 'medicine',
+    price: 1000, desc: 'とくぼうの努力値を10上げる。'
+  },
+  'インドメタシン': {
+    name: 'インドメタシン', icon: '💊', category: 'medicine',
+    price: 1000, desc: 'すばやさの努力値を10上げる。'
+  },
   'まんたんのくすり': {
     name: 'まんたんのくすり', icon: '💉', category: 'medicine',
-    price: 2500,
+    price: 2000,
     desc: 'HPを全回復する。',
     effect: { type: 'healFull' }
   },
@@ -142,21 +167,21 @@ const ITEMS = {
   },
 
   // ===== PPアイテム =====
-  'ピーピーエイド': {
-    name: 'ピーピーエイド', icon: '🔷', category: 'medicine',
+  'ぷゆぷゆエイド': {
+    name: 'ぷゆぷゆエイド', icon: '🔷', category: 'medicine',
     price: 1000,
     desc: '1つの技のPPを10回復する。',
     effect: { type: 'healPP', amount: 10 }
   },
-  'ピーピーリカバー': {
-    name: 'ピーピーリカバー', icon: '💠', category: 'medicine',
+  'ぷゆぷゆリカバー': {
+    name: 'ぷゆぷゆリカバー', icon: '💠', category: 'medicine',
     price: 2000,
     desc: '1つの技のPPを全回復する。',
     effect: { type: 'healPPFull' }
   },
-  'ピーピーマックス': {
-    name: 'ピーピーマックス', icon: '🔹', category: 'medicine',
-    price: 9800,
+  'ぷゆぷゆマックス': {
+    name: 'ぷゆぷゆマックス', icon: '🔹', category: 'medicine',
+    price: 6500,
     desc: '全ての技のPPを全回復する。',
     effect: { type: 'healAllPP' }
   },
