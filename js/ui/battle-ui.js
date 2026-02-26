@@ -105,7 +105,6 @@ function updateBattleUI() {
   if (!Battle) return;
   updateMonUI('enemy', Battle.enemyMon);
   updateMonUI('player', Battle.playerMon);
-  updateBattleCommands();
 }
 
 function updateMonUI(side, mon) {
