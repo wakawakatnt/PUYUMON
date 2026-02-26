@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ぷゆモン - PuyuMon Game</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- タイトル画面 -->
+  <div id="screen-title" class="screen active">
+    <div class="title-bg">
+      <div class="title-stars"></div>
+      <div class="title-content">
+        <div class="title-logo">
+          <div class="title-main">ぷゆモン</div>
+          <div class="title-sub">PuyuMon - Legend of Puyuyu</div>
+        </div>
+        <div class="title-mascot">🥺</div>
+        <div class="title-menu">
+          <button class="menu-btn" id="btn-new-game">はじめから</button>
+          <button class="menu-btn" id="btn-continue">つづきから</button>
+          <button class="menu-btn" id="btn-pokedex-title">ぷゆモン図鑑</button>
+        </div>
+        <div class="title-version">ver 1.0.0 © 2026 ぷゆゆワールド</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- プレイヤー名入力画面 -->
+  <div id="screen-name-input" class="screen">
+    <div class="panel-box center-box">
+      <h2>🥺 ぷゆモンの世界へようこそ！</h2>
+      <p>あなたのなまえをおしえてください</p>
+      <input type="text" id="player-name-input" maxlength="12" placeholder="なまえをいれてね" class="name-input">
+      <div class="btn-row">
+        <button class="menu-btn" id="btn-name-ok">けってい</button>
+        <button class="menu-btn secondary" id="btn-name-back">もどる</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- メインメニュー画面 -->
+  <div id="screen-main" class="screen">
+    <div class="main-layout">
+      <div class="main-header">
+        <div class="player-info">
+          <span id="main-player-name">トレーナー</span> さん
+          <span class="badge">Lv. <span id="main-trainer-level">1</span></span>
+        </div>
+        <div class="main-actions">
+          <button class="icon-btn" id="btn-save" title="セーブ">💾</button>
+          <button class="icon-btn" id="btn-load" title="ロード">📂</button>
+        </div>
+      </div>
+
+      <div class="main-menu-grid">
+        <button class="main-menu-card" id="btn-battle">
+          <div class="card-icon">⚔️</div>
+          <div class="card-label">バトル</div>
+          <div class="card-desc">ぷゆモンと戦おう！</div>
+        </button>
+        <button class="main-menu-card" id="btn-party">
+          <div class="card-icon">👥</div>
+          <div class="card-label">てもち</div>
+          <div class="card-desc">パーティを確認</div>
+        </button>
+        <button class="main-menu-card" id="btn-box">
+          <div class="card-icon">📦</div>
+          <div class="card-label">ボックス</div>
+          <div class="card-desc">ぷゆモンを整理</div>
+        </button>
+        <button class="main-menu-card" id="btn-pokedex">
+          <div class="card-icon">📖</div>
+          <div class="card-label">ぷゆモン図鑑</div>
+          <div class="card-desc">全ぷゆモンを見る</div>
+        </button>
+        <button class="main-menu-card" id="btn-shop">
+          <div class="card-icon">🛍️</div>
+          <div class="card-label">ショップ</div>
+          <div class="card-desc">アイテムを買おう</div>
+        </button>
+        <button class="main-menu-card" id="btn-status-all">
+          <div class="card-icon">📊</div>
+          <div class="card-label">全体ステータス</div>
+          <div class="card-desc">一覧・スクショ用</div>
+        </button>
+      </div>
+
+      <div class="main-footer">
+        <div class="money-display">💰 <span id="main-money">0</span> Ｐコイン</div>
+        <div class="badge-display" id="badge-display"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- バトル選択画面 -->
+  <div id="screen-battle-select" class="screen">
+    <div class="panel-box">
+      <h2>⚔️ バトルをえらぼう</h2>
+      <div class="battle-select-list">
+        <button class="menu-btn wide" id="btn-wild-battle">🌿 野生のぷゆモンとバトル</button>
+        <button class="menu-btn wide" id="btn-trainer-battle">🧑 トレーナーバトル</button>
+        <button class="menu-btn wide" id="btn-gym-battle">🏛️ ジムバトル</button>
+        <button class="menu-btn wide secondary" id="btn-battle-back">もどる</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- バトル画面 -->
+  <div id="screen-battle" class="screen">
+    <div class="battle-scene">
+      <!-- 背景 -->
+      <div class="battle-bg" id="battle-bg"></div>
+
+      <!-- 敵側 -->
+      <div class="battle-enemy-area">
+        <div class="battle-info enemy-info">
+          <div class="battle-name-row">
+            <span class="battle-mon-name" id="enemy-name">???</span>
+            <span class="battle-gender" id="enemy-gender"></span>
+            <span class="battle-level">Lv.<span id="enemy-level">1</span></span>
+            <span class="status-badge" id="enemy-status"></span>
+          </div>
+          <div class="hp-bar-outer">
+            <div class="hp-bar-inner" id="enemy-hp-bar" style="width:100%"></div>
+          </div>
+          <div class="hp-text" id="enemy-hp-text"></div>
+        </div>
+        <div class="battle-sprite enemy-sprite" id="enemy-sprite"></div>
+      </div>
+
+      <!-- 自分側 -->
+      <div class="battle-player-area">
+        <div class="battle-sprite player-sprite" id="player-sprite"></div>
+        <div class="battle-info player-info">
+          <div class="battle-name-row">
+            <span class="battle-mon-name" id="player-name-battle">???</span>
+            <span class="battle-gender" id="player-gender"></span>
+            <span class="battle-level">Lv.<span id="player-level-battle">1</span></span>
+            <span class="status-badge" id="player-status-badge"></span>
+          </div>
+          <div class="hp-bar-outer">
+            <div class="hp-bar-inner" id="player-hp-bar" style="width:100%"></div>
+          </div>
+          <div class="hp-text" id="player-hp-text">HP: 0 / 0</div>
+          <div class="exp-bar-outer">
+            <div class="exp-bar-inner" id="player-exp-bar" style="width:0%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- バトルメッセージ -->
+    <div class="battle-message-box" id="battle-message-box">
+      <div class="battle-message" id="battle-message">...</div>
+      <div class="battle-message-cursor" id="battle-cursor">▼</div>
+    </div>
+
+    <!-- バトルコマンド -->
+    <div class="battle-commands" id="battle-commands">
+      <div class="command-panel" id="cmd-main">
+        <button class="cmd-btn" id="cmd-fight">たたかう</button>
+        <button class="cmd-btn" id="cmd-bag">どうぐ</button>
+        <button class="cmd-btn" id="cmd-pokemon">ぷゆモン</button>
+        <button class="cmd-btn" id="cmd-run">にげる</button>
+      </div>
+
+      <div class="command-panel hidden" id="cmd-fight-panel">
+        <div class="moves-grid" id="moves-grid"></div>
+        <div class="move-info-panel">
+          <div>タイプ: <span id="move-type-display">---</span></div>
+          <div>PP: <span id="move-pp-display">--/--</span></div>
+          <div>威力: <span id="move-power-display">---</span></div>
+        </div>
+        <button class="cmd-back-btn" id="cmd-fight-back">もどる</button>
+      </div>
+
+      <div class="command-panel hidden" id="cmd-bag-panel">
+        <div class="bag-tabs">
+          <button class="bag-tab active" data-tab="battle">戦闘用</button>
+          <button class="bag-tab" data-tab="medicine">薬</button>
+          <button class="bag-tab" data-tab="ball">ボール</button>
+          <button class="bag-tab" data-tab="other">その他</button>
+        </div>
+        <div class="bag-list" id="bag-list"></div>
+        <button class="cmd-back-btn" id="cmd-bag-back">もどる</button>
+      </div>
+
+      <div class="command-panel hidden" id="cmd-pokemon-panel">
+        <div class="party-battle-list" id="party-battle-list"></div>
+        <button class="cmd-back-btn" id="cmd-pokemon-back">もどる</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- パーティ画面 -->
+  <div id="screen-party" class="screen">
+    <div class="party-layout">
+      <div class="party-header">
+        <h2>👥 てもちのぷゆモン</h2>
+        <button class="icon-btn" id="btn-party-back">✕</button>
+      </div>
+      <div class="party-slots" id="party-slots"></div>
+      <div class="party-detail" id="party-detail">
+        <p class="hint">ぷゆモンをえらんでください</p>
+      </div>
+      <div class="party-actions" id="party-actions" style="display:none">
+        <button class="menu-btn" id="btn-party-status">ステータス</button>
+        <button class="menu-btn" id="btn-party-moves">わざ確認</button>
+        <button class="menu-btn" id="btn-party-switch">いれかえ</button>
+        <button class="menu-btn secondary" id="btn-party-cancel">もどる</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ステータス詳細画面 -->
+  <div id="screen-status" class="screen">
+    <div class="status-layout">
+      <div class="status-header">
+        <button class="icon-btn" id="btn-status-prev">◀</button>
+        <h2>📋 ステータス</h2>
+        <button class="icon-btn" id="btn-status-next">▶</button>
+        <button class="icon-btn" id="btn-status-back">✕</button>
+      </div>
+      <div class="status-content" id="status-content"></div>
+    </div>
+  </div>
+
+  <!-- 図鑑画面 -->
+  <div id="screen-pokedex" class="screen">
+    <div class="pokedex-layout">
+      <div class="pokedex-header">
+        <h2>📖 ぷゆモン図鑑</h2>
+        <input type="text" id="pokedex-search" placeholder="なまえで検索..." class="search-input">
+        <button class="icon-btn" id="btn-pokedex-back">✕</button>
+      </div>
+      <div class="pokedex-filter">
+        <select id="pokedex-type-filter" class="filter-select">
+          <option value="">すべてのタイプ</option>
+        </select>
+        <label class="filter-check">
+          <input type="checkbox" id="pokedex-captured-only"> 捕まえたのみ
+        </label>
+      </div>
+      <div class="pokedex-list" id="pokedex-list"></div>
+      <div class="pokedex-detail" id="pokedex-detail"></div>
+    </div>
+  </div>
+
+  <!-- ボックス画面 -->
+  <div id="screen-box" class="screen">
+    <div class="box-layout">
+      <div class="box-header">
+        <button class="icon-btn" id="btn-box-prev-page">◀</button>
+        <h2>📦 ボックス <span id="box-page-num">1</span></h2>
+        <button class="icon-btn" id="btn-box-next-page">▶</button>
+        <button class="icon-btn" id="btn-box-back">✕</button>
+      </div>
+      <div class="box-grid" id="box-grid"></div>
+      <div class="box-info" id="box-info">
+        <p>ぷゆモンをえらんでください</p>
+      </div>
+      <div class="box-actions" id="box-actions" style="display:none">
+        <button class="menu-btn" id="btn-box-to-party">てもちに加える</button>
+        <button class="menu-btn" id="btn-box-status">ステータス</button>
+        <button class="menu-btn secondary" id="btn-box-cancel">もどる</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ショップ画面 -->
+  <div id="screen-shop" class="screen">
+    <div class="shop-layout">
+      <div class="shop-header">
+        <h2>🛍️ ぷゆモンショップ</h2>
+        <div>💰 <span id="shop-money">0</span> Ｐコイン</div>
+        <button class="icon-btn" id="btn-shop-back">✕</button>
+      </div>
+      <div class="shop-tabs">
+        <button class="shop-tab active" data-tab="ball">ぷゆボール</button>
+        <button class="shop-tab" data-tab="medicine">薬・回復</button>
+        <button class="shop-tab" data-tab="battle">戦闘アイテム</button>
+        <button class="shop-tab" data-tab="stone">進化の石</button>
+      </div>
+      <div class="shop-list" id="shop-list"></div>
+      <div class="bag-owned">
+        <h3>もちもの</h3>
+        <div id="bag-owned-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 全体ステータス一覧（スクショ用） -->
+  <div id="screen-status-all" class="screen">
+    <div class="status-all-layout">
+      <div class="status-all-header">
+        <h2>📊 全ぷゆモン ステータス一覧</h2>
+        <div class="status-all-controls">
+          <select id="status-all-sort" class="filter-select">
+            <option value="id">図鑑番号順</option>
+            <option value="name">なまえ順</option>
+            <option value="hp">HP順</option>
+            <option value="atk">こうげき順</option>
+            <option value="total">合計値順</option>
+          </select>
+          <button class="menu-btn" id="btn-status-all-print">🖨️ 印刷/スクショ</button>
+          <button class="icon-btn" id="btn-status-all-back">✕</button>
+        </div>
+      </div>
+      <div class="status-all-table-wrap">
+        <table class="status-all-table" id="status-all-table">
+          <thead>
+            <tr>
+              <th>No.</th>
+              <th>名前</th>
+              <th>タイプ1</th>
+              <th>タイプ2</th>
+              <th>HP</th>
+              <th>こうげき</th>
+              <th>ぼうぎょ</th>
+              <th>とくこう</th>
+              <th>とくぼう</th>
+              <th>すばやさ</th>
+              <th>合計</th>
+              <th>特性</th>
+              <th>状態</th>
+            </tr>
+          </thead>
+          <tbody id="status-all-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ぷゆモン育成・技編集画面 -->
+  <div id="screen-edit" class="screen">
+    <div class="edit-layout">
+      <div class="edit-header">
+        <h2>⚙️ ぷゆモン育成設定</h2>
+        <button class="icon-btn" id="btn-edit-back">✕</button>
+      </div>
+      <div class="edit-content" id="edit-content"></div>
+    </div>
+  </div>
+
+  <!-- メッセージ/通知オーバーレイ -->
+  <div id="overlay-msg" class="overlay hidden">
+    <div class="overlay-box">
+      <div class="overlay-text" id="overlay-text"></div>
+      <button class="menu-btn" id="overlay-ok">OK</button>
+    </div>
+  </div>
+
+  <!-- 確認ダイアログ -->
+  <div id="overlay-confirm" class="overlay hidden">
+    <div class="overlay-box">
+      <div class="overlay-text" id="confirm-text"></div>
+      <div class="btn-row">
+        <button class="menu-btn" id="confirm-yes">はい</button>
+        <button class="menu-btn secondary" id="confirm-no">いいえ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ローディング -->
+  <div id="loading" class="overlay">
+    <div class="loading-box">
+      <div class="loading-spin">🥺</div>
+      <div>よみこみちゅう...</div>
+    </div>
+  </div>
+
+  <!-- スクリプト読み込み（順番重要） -->
+  <script src="js/data/types.js"></script>
+  <script src="js/data/abilities.js"></script>
+  <script src="js/data/moves.js"></script>
+  <script src="js/data/items.js"></script>
+  <script src="js/data/characters.js"></script>
+  <script src="js/core/game.js"></script>
+  <script src="js/core/battle.js"></script>
+  <script src="js/ui/pokedex.js"></script>
+  <script src="js/ui/party.js"></script>
+  <script src="js/ui/box.js"></script>
+  <script src="js/ui/shop.js"></script>
+  <script src="js/ui/status-screen.js"></script>
+  <script src="js/ui/battle-ui.js"></script>
+  <script src="js/ui/main-menu.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
