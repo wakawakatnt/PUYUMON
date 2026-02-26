@@ -6,7 +6,7 @@ const ITEMS = {
   // ===== ぷゆボール系 =====
   'ぷゆボール': {
     name: 'ぷゆボール', icon: '🟣', category: 'ball',
-    price: 200, catchRate: 1.0,
+    price: 200, catchRate: 255,
     desc: '普通のぷゆボール。捕獲率×1.0。',
   },
   'スーパーぷゆボール': {
