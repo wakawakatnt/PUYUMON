@@ -1,5 +1,6 @@
+
 // =====================================================
-// ぷゆモン - ステータス詳細 & 全体一覧画面
+// ぷゆモン - ステータス詳細 & 全体一覧 & 育成画面
 // =====================================================
 
 let statusScreenMonList = [];
@@ -138,7 +139,7 @@ function renderStatusContent() {
     </div>
 
     <div style="margin-bottom:8px">
-      <button class="menu-btn" onclick="showEditScreen(${statusScreenIndex})" style="width:100%">⚙️ 育成設定を変更</button>
+      <button class="menu-btn" onclick="showEditScreen(${statusScreenIndex})" style="width:100%">⚙️ 育成・技いれかえ</button>
     </div>
   `;
 }
@@ -275,10 +276,13 @@ function setupStatusAllEvents() {
 }
 
 // =====================================================
-// 育成設定（技・EV・特性・持ち物）編集
+// 育成設定（技入れ替え・EV強化）独自UI
 // =====================================================
+let editSelectedMoveSlot = -1;
+
 function showEditScreen(partyIndex) {
   showScreen('edit');
+  editSelectedMoveSlot = -1;
   renderEditContent(partyIndex);
 }
 
@@ -292,167 +296,152 @@ function renderEditContent(partyIndex) {
   const base = getPuyuMonBase(mon.speciesId);
   if (!base) return;
 
-  // 技選択オプション
-  const moveOptions = getMoveNames().map(m =>
-    `<option value="${m}" ${mon.moves.includes(m) ? '' : ''}>${m}</option>`
-  ).join('');
+  // 習得可能な技リストを取得（現在のレベルまでに覚えられる技のみ）
+  const learnableMoves = getLearnableMoves(base, mon.level);
 
-  // 特性オプション
-  const abilityOptions = (base.abilities || []).concat(getAbilityNames().filter(a => !(base.abilities || []).includes(a)))
-    .map(a => `<option value="${a}" ${mon.ability === a ? 'selected' : ''}>${a}</option>`).join('');
+  // 個体値(IV)表示
+  const ivHtml = ['hp','atk','def','spa','spd','spe']
+    .map(key => `<span style="display:inline-block;width:30px">${mon.ivs[key]}</span>`)
+    .join(' ');
 
-  // アイテムオプション
-  const itemOptions = `<option value="">（なし）</option>` + getItemNames().map(i =>
-    `<option value="${i}" ${mon.item === i ? 'selected' : ''}>${ITEMS[i]?.icon || ''} ${i}</option>`
-  ).join('');
+  // 努力値(EV)とドーピングアイテムボタン
+  const evHtml = ['hp','atk','def','spa','spd','spe'].map(key => {
+    return `
+      <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.05); padding:6px 10px; border-radius:6px;">
+        <span style="font-size:13px; font-weight:bold; width:70px;">${STAT_NAMES[key]}</span>
+        <span style="font-size:14px; font-weight:bold; color:var(--accent2); width:40px; text-align:right;">${mon.evs[key]||0}</span>
+        <span style="font-size:11px; color:var(--text-sub); width:50px; text-align:right;">(実:${mon.stats[key]})</span>
+        <div style="flex:1; text-align:right;">
+          ${getEvItemButtonHtml(partyIndex, key)}
+        </div>
+      </div>
+    `;
+  }).join('');
 
-  // 性格オプション
-  const natureOptions = Object.keys(NATURES).map(n =>
-    `<option value="${n}" ${mon.nature === n ? 'selected' : ''}>${n}</option>`
-  ).join('');
+  // 独自UI: 技スロット
+  const moveSlotsHtml = [0,1,2,3].map(i => {
+    const m = mon.moves[i];
+    const isSelected = editSelectedMoveSlot === i;
+    return `
+      <div class="edit-move-slot ${isSelected ? 'selected' : ''} ${!m ? 'empty' : ''}" onclick="selectEditMoveSlot(${partyIndex}, ${i})">
+        ${m ? `<strong>${m}</strong><br><span style="font-size:11px; color:var(--text-sub);">${MOVES[m]?.type || '?'} / PP ${MOVES[m]?.pp || '?'}</span>` : '（スロットあき）'}
+      </div>
+    `;
+  }).join('');
 
-  // EV入力 (合計510まで)
-  const evFields = ['hp','atk','def','spa','spd','spe'].map(key => `
-    <div class="stat-edit-row">
-      <label>${STAT_NAMES[key]}</label>
-      <input type="range" min="0" max="252" value="${mon.evs[key]||0}"
-        oninput="updateEV(${partyIndex},'${key}',this.value);document.getElementById('ev-${key}-${partyIndex}').textContent=this.value"
-        style="flex:1">
-      <span id="ev-${key}-${partyIndex}">${mon.evs[key]||0}</span>
-      <span style="font-size:11px;color:var(--text-sub)">(実:${mon.stats[key]})</span>
-    </div>
-  `).join('');
-
-  // IV入力
-  const ivFields = ['hp','atk','def','spa','spd','spe'].map(key => `
-    <div class="stat-edit-row">
-      <label>${STAT_NAMES[key]}</label>
-      <input type="range" min="0" max="31" value="${mon.ivs[key]||0}"
-        oninput="updateIV(${partyIndex},'${key}',this.value);document.getElementById('iv-${key}-${partyIndex}').textContent=this.value">
-      <span id="iv-${key}-${partyIndex}">${mon.ivs[key]||0}</span>
-    </div>
-  `).join('');
+  // 独自UI: 習得可能な技プール
+  const movePoolHtml = learnableMoves.map(m => {
+    const isEquipped = mon.moves.includes(m);
+    return `
+      <button class="edit-pool-btn ${isEquipped ? 'equipped' : ''}" onclick="learnMoveToSlot(${partyIndex}, '${m}')" ${isEquipped ? 'disabled' : ''}>
+        ${m} <span style="font-size:10px">(${MOVES[m]?.type})</span>
+      </button>
+    `;
+  }).join('');
 
   content.innerHTML = `
     <div class="edit-section">
-      <h3>🐾 基本情報 - ${base.icon || '❓'} ${mon.name}</h3>
-      <div class="stat-edit-row">
-        <label>ニックネーム</label>
-        <input type="text" maxlength="12" value="${mon.nickname || ''}" placeholder="${mon.name}"
-          style="flex:1;background:rgba(255,255,255,0.1);border:1px solid var(--border-color);border-radius:6px;color:white;font-size:14px;padding:6px"
-          oninput="Game.party[${partyIndex}].nickname = this.value || null">
-      </div>
-      <div class="stat-edit-row">
-        <label>レベル</label>
-        <input type="number" min="1" max="100" value="${mon.level}"
-          style="width:70px;background:rgba(255,255,255,0.1);border:1px solid var(--border-color);border-radius:6px;color:white;font-size:14px;padding:6px;text-align:center"
-          onchange="setMonLevel(${partyIndex}, parseInt(this.value))">
-        <button onclick="setMonLevel(${partyIndex}, Math.min(100,Game.party[${partyIndex}].level+1))"
-          style="background:var(--accent1);border:none;border-radius:6px;color:white;padding:4px 10px;cursor:pointer">+1</button>
-        <button onclick="setMonLevel(${partyIndex}, 100)"
-          style="background:var(--accent3);border:none;border-radius:6px;color:var(--text-dark);padding:4px 10px;cursor:pointer">MAX</button>
+      <h3>🐾 個体情報 (固定)</h3>
+      <div style="font-size:13px; line-height:1.6;">
+        <span style="color:var(--accent3)">Lv.${mon.level}</span> ${base.icon} ${mon.name} <br>
+        特性: <strong>${mon.ability}</strong> / 性格: <strong>${mon.nature}</strong><br>
+        <span style="font-size:11px; color:var(--text-sub);">個体値(IV): ${ivHtml}</span>
       </div>
     </div>
 
     <div class="edit-section">
-      <h3>⚙️ 特性・性格・持ち物</h3>
-      <div class="stat-edit-row">
-        <label>特性</label>
-        <select class="ability-select" onchange="Game.party[${partyIndex}].ability = this.value">${abilityOptions}</select>
+      <h3>⚔️ 技のいれかえ</h3>
+      <p style="font-size:11px; color:var(--text-sub); margin-bottom:8px;">
+        入れ替えたいスロットをタップして選択し、下のリストから技を選んでください。
+      </p>
+      <div class="edit-move-slots-grid">
+        ${moveSlotsHtml}
       </div>
-      <div class="stat-edit-row">
-        <label>性格</label>
-        <select class="nature-select" onchange="setMonNature(${partyIndex}, this.value)">${natureOptions}</select>
-      </div>
-      <div class="stat-edit-row">
-        <label>持ち物</label>
-        <select class="item-select" onchange="Game.party[${partyIndex}].item = this.value || null">${itemOptions}</select>
+      <div class="edit-move-pool">
+        ${movePoolHtml}
       </div>
     </div>
 
     <div class="edit-section">
-      <h3>⚔️ わざ設定</h3>
-      <div class="move-slot-edit" id="move-slots-${partyIndex}">
-        ${[0,1,2,3].map(i => `
-          <div>
-            <div style="font-size:11px;color:var(--text-sub);margin-bottom:3px">わざ${i+1}</div>
-            <select class="move-select" onchange="setMonMove(${partyIndex},${i},this.value)">
-              <option value="">（なし）</option>
-              ${getMoveNames().map(m => `<option value="${m}" ${mon.moves[i]===m?'selected':''}>${m}</option>`).join('')}
-            </select>
-          </div>
-        `).join('')}
+      <h3>💪 努力値(EV)の強化 <span style="font-size:12px; color:var(--text-sub);">合計: ${Object.values(mon.evs).reduce((a,b)=>a+b,0)}/510</span></h3>
+      <p style="font-size:11px; color:var(--text-sub); margin-bottom:8px;">ショップで買った薬を使ってステータスの基礎値を上げます。</p>
+      <div style="display:flex; flex-direction:column; gap:4px;">
+        ${evHtml}
       </div>
-      <button onclick="learnAllMoves(${partyIndex})" style="margin-top:8px;background:rgba(255,255,255,0.1);border:1px solid var(--border-color);border-radius:8px;color:white;padding:6px 12px;cursor:pointer;font-size:12px">
-        🎓 習得可能な技をランダムにセット
-      </button>
     </div>
 
-    <div class="edit-section">
-      <h3>💪 努力値（EV）<span id="ev-total-${partyIndex}" style="font-size:12px;color:var(--text-sub)"> 合計: ${Object.values(mon.evs).reduce((a,b)=>a+b,0)}/510</span></h3>
-      ${evFields}
-      <button onclick="resetEVs(${partyIndex})" style="margin-top:6px;background:rgba(255,0,0,0.2);border:1px solid #ff4444;border-radius:6px;color:#ff4444;padding:5px 12px;cursor:pointer;font-size:12px">EVリセット</button>
-      <button onclick="maxEVs(${partyIndex})" style="margin-top:6px;margin-left:6px;background:rgba(0,255,100,0.15);border:1px solid #44ff88;border-radius:6px;color:#44ff88;padding:5px 12px;cursor:pointer;font-size:12px">EV最大化（252×2）</button>
-    </div>
-
-    <div class="edit-section">
-      <h3>🧬 個体値（IV）</h3>
-      ${ivFields}
-      <button onclick="maxIVs(${partyIndex})" style="margin-top:6px;background:rgba(0,200,255,0.15);border:1px solid #44aaff;border-radius:6px;color:#44aaff;padding:5px 12px;cursor:pointer;font-size:12px">IV全MAX（31）</button>
-    </div>
-
-    <div style="padding:0 0 8px">
-      <button class="edit-save-btn" onclick="saveEditAndReturn(${partyIndex})">✅ 保存してもどる</button>
+    <div style="padding:0 0 8px; margin-top:10px;">
+      <button class="edit-save-btn" onclick="saveEditAndReturn(${partyIndex})">✅ おわる</button>
     </div>
   `;
 }
 
-function updateEV(partyIndex, stat, value) {
-  const mon = Game.party[partyIndex];
-  if (!mon) return;
-  const v = parseInt(value) || 0;
-  const total = Object.values(mon.evs).reduce((a,b) => a+b, 0) - (mon.evs[stat] || 0) + v;
-  if (total > 510) return;
-  mon.evs[stat] = v;
-  recalcMonStats(partyIndex);
-  const totalEl = document.getElementById(`ev-total-${partyIndex}`);
-  if (totalEl) totalEl.textContent = ` 合計: ${Object.values(mon.evs).reduce((a,b)=>a+b,0)}/510`;
+// EVアップアイテムボタン生成
+function getEvItemButtonHtml(partyIndex, statKey) {
+  const itemMap = { hp: 'マックスアップ', atk: 'タウリン', def: 'ブロムヘキシン', spa: 'リゾチウム', spd: 'キトサン', spe: 'インドメタシン' };
+  const itemName = itemMap[statKey];
+  const count = Game.bag[itemName] || 0;
+  if (count > 0) {
+    return `<button class="ev-up-btn" onclick="useEvItem(${partyIndex}, '${itemName}', '${statKey}')">${itemName}使う(持:${count})</button>`;
+  } else {
+    return `<button class="ev-up-btn disabled" disabled>${itemName}なし</button>`;
+  }
 }
 
-function updateIV(partyIndex, stat, value) {
+// 努力値アイテム使用ロジック
+function useEvItem(partyIndex, itemName, statKey) {
   const mon = Game.party[partyIndex];
-  if (!mon) return;
-  mon.ivs[stat] = clamp(parseInt(value) || 0, 0, 31);
-  recalcMonStats(partyIndex);
-}
+  if (!mon || !Game.bag[itemName]) return;
+  
+  const currentTotal = Object.values(mon.evs).reduce((a, b) => a + b, 0);
+  if (currentTotal >= 510) {
+    showOverlayMsg('努力値の合計が限界(510)に達しています！');
+    return;
+  }
+  if (mon.evs[statKey] >= 252) {
+    showOverlayMsg('このステータスはこれ以上薬で上がりません！');
+    return;
+  }
 
-function setMonLevel(partyIndex, level) {
-  const mon = Game.party[partyIndex];
-  if (!mon) return;
-  mon.level = clamp(level, 1, 100);
-  const base = getPuyuMonBase(mon.speciesId);
-  mon.exp = calcExpForLevel(base?.expGroup || 'medium', mon.level);
+  // アイテム消費
+  Game.bag[itemName]--;
+  
+  // 上昇量計算 (最大10。ただし上限252、合計上限510を超えないように調整)
+  let gain = 10;
+  if (mon.evs[statKey] + gain > 252) gain = 252 - mon.evs[statKey];
+  if (currentTotal + gain > 510) gain = 510 - currentTotal;
+  
+  mon.evs[statKey] += gain;
   recalcMonStats(partyIndex);
+  
   renderEditContent(partyIndex);
 }
 
-function setMonNature(partyIndex, nature) {
-  const mon = Game.party[partyIndex];
-  if (!mon) return;
-  mon.nature = nature;
-  recalcMonStats(partyIndex);
+// 技スロット選択
+function selectEditMoveSlot(partyIndex, slotIndex) {
+  editSelectedMoveSlot = slotIndex;
+  renderEditContent(partyIndex);
 }
 
-function setMonMove(partyIndex, slot, moveName) {
+// 技のセット
+function learnMoveToSlot(partyIndex, moveName) {
+  if (editSelectedMoveSlot < 0 || editSelectedMoveSlot > 3) {
+    showOverlayMsg('まずは上の4つの枠から\n入れ替えたい場所をタップしてください。');
+    return;
+  }
   const mon = Game.party[partyIndex];
   if (!mon) return;
-  if (moveName) {
-    mon.moves[slot] = moveName;
-    if (!mon.movePPs[moveName]) mon.movePPs[moveName] = MOVES[moveName]?.pp || 10;
-  } else {
-    mon.moves.splice(slot, 1);
-    mon.moves = mon.moves.filter(Boolean).slice(0, 4);
-  }
+
+  if (mon.moves.includes(moveName)) return;
+
+  mon.moves[editSelectedMoveSlot] = moveName;
+  mon.movePPs[moveName] = MOVES[moveName]?.pp || 10;
+
+  // 空きを詰める
+  mon.moves = mon.moves.filter(Boolean);
+
+  editSelectedMoveSlot = -1;
+  renderEditContent(partyIndex);
 }
 
 function recalcMonStats(partyIndex) {
@@ -461,54 +450,6 @@ function recalcMonStats(partyIndex) {
   mon.stats = calcStats(mon.baseStats, mon.level, mon.ivs, mon.evs, mon.nature);
   mon.maxHp = mon.stats.hp;
   mon.currentHp = Math.min(mon.maxHp, mon.currentHp);
-}
-
-function resetEVs(partyIndex) {
-  const mon = Game.party[partyIndex];
-  if (!mon) return;
-  mon.evs = { hp:0, atk:0, def:0, spa:0, spd:0, spe:0 };
-  recalcMonStats(partyIndex);
-  renderEditContent(partyIndex);
-}
-
-function maxEVs(partyIndex) {
-  const mon = Game.party[partyIndex];
-  if (!mon) return;
-  // 最も有効な2つのステータスに252ずつ
-  const types = mon.types;
-  let primaryStat = 'atk', secondaryStat = 'spe';
-  if (types.includes('エスパー') || types.includes('げんそう')) {
-    primaryStat = 'spa'; secondaryStat = 'spe';
-  } else if (types.includes('みず') || types.includes('ほのお')) {
-    primaryStat = 'spa'; secondaryStat = 'spe';
-  }
-  mon.evs = { hp:6, atk:0, def:0, spa:0, spd:0, spe:0 };
-  mon.evs[primaryStat] = 252;
-  mon.evs[secondaryStat] = 252;
-  mon.evs.hp = 4;
-  recalcMonStats(partyIndex);
-  renderEditContent(partyIndex);
-}
-
-function maxIVs(partyIndex) {
-  const mon = Game.party[partyIndex];
-  if (!mon) return;
-  mon.ivs = { hp:31, atk:31, def:31, spa:31, spd:31, spe:31 };
-  recalcMonStats(partyIndex);
-  renderEditContent(partyIndex);
-}
-
-function learnAllMoves(partyIndex) {
-  const mon = Game.party[partyIndex];
-  if (!mon) return;
-  const base = getPuyuMonBase(mon.speciesId);
-  const learnableMoves = getLearnableMoves(base, mon.level);
-  const shuffled = shuffleArray(learnableMoves);
-  const selected = shuffled.slice(0, 4);
-  mon.moves = selected;
-  mon.movePPs = {};
-  selected.forEach(m => { mon.movePPs[m] = MOVES[m]?.pp || 10; });
-  renderEditContent(partyIndex);
 }
 
 function saveEditAndReturn(partyIndex) {
