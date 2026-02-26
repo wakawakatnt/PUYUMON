@@ -101,7 +101,6 @@ function updateBattleUI() {
   if (!Battle) return;
   updateMonUI('enemy', Battle.enemyMon);
   updateMonUI('player', Battle.playerMon);
-  // ※エラーの原因だった updateBattleCommands() を完全に削除
 }
 
 function updateMonUI(side, mon) {
@@ -316,7 +315,7 @@ async function executePlayerItem(itemName) {
 }
 
 // =====================================================
-// ボール投擲処理 (新規追加)
+// ボール投擲・捕獲処理
 // =====================================================
 async function executePlayerBall(ballName) {
   if (battleInputLock || !Battle) return;
@@ -440,7 +439,7 @@ async function executeRun() {
 }
 
 // =====================================================
-// バトル背景
+// バトル背景とアニメーション
 // =====================================================
 function updateBattleBg() {
   const bg = document.getElementById('battle-bg');
@@ -455,13 +454,35 @@ function updateBattleBg() {
   bg.style.background = bgs[idx];
 }
 
+function animateAttack(side) {
+  const el = document.getElementById(side === 'player' ? 'player-sprite' : 'enemy-sprite');
+  if (el) {
+    el.classList.add('attacking');
+    setTimeout(() => el.classList.remove('attacking'), 400);
+  }
+}
+
+function animateDamage(side) {
+  const el = document.getElementById(side === 'player' ? 'player-sprite' : 'enemy-sprite');
+  if (el) {
+    el.classList.add('taking-damage');
+    setTimeout(() => el.classList.remove('taking-damage'), 400);
+  }
+}
+
+function animateFaint(side) {
+  const el = document.getElementById(side === 'player' ? 'player-sprite' : 'enemy-sprite');
+  if (el) {
+    el.classList.add('fainting');
+  }
+}
+
 // =====================================================
 // バトル終了処理
 // =====================================================
 function handleBattleEnd(result) {
   battleInputLock = true;
 
-  // 全てのメッセージの描画が終わるまで待機してからリザルトを出す
   const checkEnd = () => {
     if (messageQueue.length > 0 || isShowingMessage) {
       setTimeout(checkEnd, 500);
@@ -473,7 +494,6 @@ function handleBattleEnd(result) {
       showOverlayMsg(`🎉 バトルに勝った！\n${Battle.trainer ? `${Battle.trainer.name}に勝利！` : ''}`);
     } else if (result === 'lose') {
       showOverlayMsg(`😭 全てのぷゆモンがたおれた…\nお金が少し減った。\nぷゆモンは全回復した。`);
-      // 敗北時の回復処理
       Game.party.forEach(m => { if(m) m.currentHp = m.maxHp; });
     } else if (result === 'escaped') {
       showOverlayMsg('💨 逃げ出した！');
@@ -484,6 +504,8 @@ function handleBattleEnd(result) {
 
     document.getElementById('overlay-ok').onclick = () => {
       hideOverlay('overlay-msg');
+      // 倒れたスプライトをリセット
+      document.querySelectorAll('.battle-sprite').forEach(el => el.classList.remove('fainting'));
       showScreen('main');
       updateMainMenu();
       Battle = null;
