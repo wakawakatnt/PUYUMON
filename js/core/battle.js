@@ -1,14 +1,7 @@
 // =====================================================
 // ぷゆモン - バトル & コアシステム 究極完全版
-// （全特性・全技・特殊エフェクト・上限値処理 完全対応）
 // =====================================================
 
-const GAME_VERSION = '1.0.2';
-const SAVE_KEY = 'puyumon_save';
-
-/**
- * バトル状態管理
- */
 let Battle = null;
 
 // =====================================================
@@ -197,20 +190,18 @@ function checkAccuracy(attacker, defender, move) {
   const accMult = getAccStageMultiplier((attacker.statStages.acc||0) - (defender.statStages.eva||0));
   let finalAcc = (move.accuracy / 100) * accMult;
 
-  // 特性: はりきり
   if (ABILITIES[attacker.ability]?.physicalAccMult && move.category === 'physical') {
     finalAcc *= ABILITIES[attacker.ability].physicalAccMult;
   }
 
   const isHit = Math.random() < finalAcc;
 
-  // 特性: 5おくねん (回避時に5ターンに1回スタン)
   if (!isHit && ABILITIES[defender.ability]?.fiveHundredMillion) {
     defender.flags.dodgeCount = (defender.flags.dodgeCount || 0) + 1;
     if (defender.flags.dodgeCount >= 5) {
       defender.flags.dodgeCount = 0;
       defender.flags.flinch = true;
-      addMessage(`${defender.name}は技をかわしたが「5おくねんボタン」を押してしまい気が遠くなった！(次ターン行動不能)`);
+      addMessage(`${defender.name}は技をかわしたが「5おくねんボタン」を押してしまい気が遠くなった！`);
     }
   }
   return isHit;
@@ -223,7 +214,6 @@ async function executeMoveAction(side, moveName) {
   const attacker = side === 'player' ? Battle.playerMon : Battle.enemyMon;
   const defender = side === 'player' ? Battle.enemyMon : Battle.playerMon;
   
-  // 洗脳等で技が上書きされている場合のケア
   const move = MOVES[attacker.lastUsedMove] || MOVES[moveName]; 
   if (!move) { addMessage('技が見つからない！'); return; }
 
@@ -235,7 +225,7 @@ async function executeMoveAction(side, moveName) {
   }
 
   addMessage(`${attacker.name}の ${move.name}！`);
-  animateAttack(side);
+  if (typeof animateAttack === 'function') animateAttack(side);
 
   // 命中判定
   if (!checkAccuracy(attacker, defender, move)) {
@@ -248,16 +238,13 @@ async function executeMoveAction(side, moveName) {
   attacker.flags.sureHitNext = false;
   attacker.lastUsedMove = move.name;
 
-  // 相手の特性による技無効化（ふしぎなまもり等）
   if (ABILITIES[defender.ability]?.onHit) {
     const res = ABILITIES[defender.ability].onHit(Battle, attacker, defender, move);
     if (res?.blocked) { addMessage(res.msg); return; }
   }
 
-  // ① 技使用時(Use)のエフェクト処理
   await processEffectsByTrigger('use', move, attacker, defender, side);
 
-  // ② ダメージ処理 (変化技以外)
   if (move.category !== 'status') {
     const hits = move.fixedHits || (move.multiHit ? Math.floor(Math.random() * (move.multiHit[1] - move.multiHit[0] + 1)) + move.multiHit[0] : 1);
     let hitCount = 0;
@@ -269,17 +256,14 @@ async function executeMoveAction(side, moveName) {
     if (hits > 1 && hitCount > 1) addMessage(`${hitCount}回当たった！`);
   }
 
-  // ③ 技命中時(Hit)のエフェクト処理
   if (defender.currentHp > 0 || move.category === 'status') {
     await processEffectsByTrigger('hit', move, attacker, defender, side);
   }
   
-  // ひんしチェック
   if (defender.currentHp <= 0) await handleFaint(side === 'player' ? 'enemy' : 'player');
   if (attacker.currentHp <= 0) await handleFaint(side);
 }
 
-// 構造化エフェクトのパース
 async function processEffectsByTrigger(triggerType, move, attacker, defender, side) {
   if (!move.effect || !Array.isArray(move.effect)) return;
   
@@ -290,9 +274,7 @@ async function processEffectsByTrigger(triggerType, move, attacker, defender, si
     let targetMon = null;
     if (eff.target === 'self') targetMon = attacker;
     if (eff.target === 'enemy') targetMon = defender;
-    if (eff.target === 'field') targetMon = null;
 
-    // 「おうごんのからだ」など、相手の追加効果無効化
     if (triggerType === 'hit' && move.category !== 'status' && targetMon === defender) {
       if (ABILITIES[defender.ability]?.blockSecondary) continue;
     }
@@ -311,12 +293,11 @@ async function executeDamageMove(side, move, attacker, defender) {
   const effMsg = getEffectivenessMessage(effectiveness);
   if (effMsg) addMessage(effMsg);
   
-  if (effectiveness === 0) return; // 無効なら終了
+  if (effectiveness === 0) return; 
 
   const actualDmg = applyDamage(defender, damage);
-  animateDamage(side === 'player' ? 'enemy' : 'player');
+  if (typeof animateDamage === 'function') animateDamage(side === 'player' ? 'enemy' : 'player');
 
-  // ダメージ量に依存する効果 (吸収・反動)
   if (move.drain) {
     healHp(attacker, Math.floor(actualDmg * (move.drain / 100)));
     addMessage(`${defender.name}から体力を奪った！`);
@@ -330,7 +311,6 @@ async function executeDamageMove(side, move, attacker, defender) {
     addMessage(`${attacker.name}は反動を受けた！`);
   }
 
-  // 接触特性などの処理
   await processMoveSideEffect(move, attacker, defender, actualDmg);
 }
 
@@ -341,7 +321,6 @@ function calcDamage(attacker, defender, move) {
   let moveType = move.type;
   let useEnemyAtk = false, useDef = false, ignoreDef = false, ignoreEvasion = false;
   
-  // ① [超重要] 常時エフェクトによる威力・タイプの書き換え・上限値設定
   const alwaysEff = (move.effect || []).filter(e => e.trigger === 'always');
   alwaysEff.forEach(eff => {
     if (eff.action === 'reversal') power = 200 * (1 - (attacker.currentHp / attacker.maxHp));
@@ -357,28 +336,21 @@ function calcDamage(attacker, defender, move) {
     if (eff.action === 'randomMoveType') moveType = TYPES[Math.floor(Math.random() * TYPES.length)];
     if (eff.action === 'randomPower') power = Math.floor(Math.random() * (eff.max - eff.min + 1)) + eff.min;
     
-    // ターン数比例ダメージ
     if (eff.action === 'turnDamage') {
       const limit = eff.max || 999;
       power = Math.min(limit, (Battle.turn * eff.multiplier) + (eff.base || 0));
     }
-    
-    // 使うたびに威力が上がる/倍になる（しゃかいじんのつとめ、りそくがふえる 等）
     if (eff.action === 'growingPower') {
       attacker.flags.growCount = (attacker.flags.growCount || 0) + 1;
-      const limit = eff.max || 999; // 上限値のフェイルセーフ
-      if (eff.mult) {
-        power = Math.min(limit, power * Math.pow(eff.mult, attacker.flags.growCount));
-      } else {
-        power = Math.min(limit, power + (eff.value * attacker.flags.growCount));
-      }
+      const limit = eff.max || 999;
+      if (eff.mult) power = Math.min(limit, power * Math.pow(eff.mult, attacker.flags.growCount));
+      else power = Math.min(limit, power + (eff.value * attacker.flags.growCount));
     }
     if (eff.action === 'judgment') moveType = attacker.types[0];
   });
 
   if (ABILITIES[attacker.ability]?.chaosType) moveType = TYPES[Math.floor(Math.random() * TYPES.length)];
 
-  // ② 相性計算
   let eff = getTypeEffectiveness(moveType, defender.types);
   
   if (ABILITIES[attacker.ability]?.pierceResistance || move.pierceResistance) eff = Math.max(1, eff);
@@ -389,27 +361,23 @@ function calcDamage(attacker, defender, move) {
 
   if (eff === 0) return { damage: 0, crit: false, effectiveness: 0 };
 
-  // 等倍以下無効（あんのじょう）
   if (ABILITIES[defender.ability]?.surpriseAbsorb && eff <= 1) {
     applyStatChange(defender, 'atk', 1, defender.name);
     addMessage(`${defender.name}はあんのじょうの技を吸収して攻撃が上がった！`);
     return { damage: 0, crit: false, effectiveness: eff };
   }
 
-  // ③ 急所判定
   let critBonus = move.critRateBonus || 0;
   if (move.alwaysCrit) critBonus = 99;
   const critTables = [1/24, 1/8, 1/2, 1];
   const crit = Math.random() < (critTables[Math.min(3, critBonus)] || 1);
 
-  // ④ 実効ステータス取得
   let aStat = useEnemyAtk ? getEffectiveStat(defender, 'atk') : getEffectiveStat(attacker, move.category === 'physical' ? 'atk' : 'spa');
   let dStat = useDef ? getEffectiveStat(defender, 'def') : getEffectiveStat(defender, move.category === 'physical' ? 'def' : 'spd');
   
   if (ignoreDef) dStat = 10;
   if (crit) aStat = Math.max(aStat, attacker.stats[move.category === 'physical' ? 'atk' : 'spa']);
 
-  // ⑤ 特性とアイテムの威力補正
   let abilityMult = 1.0;
   const atkAb = ABILITIES[attacker.ability];
   const defAb = ABILITIES[defender.ability];
@@ -435,9 +403,8 @@ function calcDamage(attacker, defender, move) {
   if (defAb?.staticDefUp2 && move.category === 'physical') abilityMult *= 0.5;
 
   const stab = attacker.types.includes(moveType) ? 1.5 : 1.0;
-  const rand = (Math.floor(Math.random() * 16) + 85) / 100; // 0.85 ~ 1.00
+  const rand = (Math.floor(Math.random() * 16) + 85) / 100;
   
-  // ⑥ 最終ダメージ算出
   let dmg = Math.floor((Math.floor((Math.floor(2 * attacker.level / 5) + 2) * power * aStat / dStat) / 50) + 2);
   dmg = Math.floor(dmg * stab * eff * abilityMult * rand);
   if (crit) dmg = Math.floor(dmg * 1.5);
@@ -450,7 +417,6 @@ async function processMoveSideEffect(move, attacker, defender, damage) {
   const defAb = ABILITIES[defender.ability];
   const atkAb = ABILITIES[attacker.ability];
 
-  // 接触ダメージと特性伝染
   if (move.contact) {
     if (defAb?.mummify && attacker.ability !== 'ミイラほうたい') { 
       attacker.ability = 'ミイラほうたい'; addMessage(`${attacker.name}の特性がミイラになった！`); 
@@ -465,7 +431,6 @@ async function processMoveSideEffect(move, attacker, defender, damage) {
     }
   }
 
-  // 怒りスタック
   if (defAb?.rageStack) {
     defender.flags.rageStack = (defender.flags.rageStack || 0) + 1;
     applyStatChange(defender, 'atk', 1, defender.name);
@@ -501,18 +466,17 @@ async function applyActionEffect(eff, attacker, defender, target, side, move) {
     case 'flinch':
       if (target) target.flags.flinch = true;
       break;
-    case 'healPercent':
+    case 'healPercent': {
       if (target) {
         const h = healHp(target, Math.floor(target.maxHp * (eff.value / 100)));
         if(h > 0) addMessage(`${target.name}のHPが回復した！`);
       }
       break;
+    }
     case 'cureStatus':
       if (target && target.status) { target.status = null; addMessage(`${target.name}の状態異常が治った！`); }
       break;
-
-    // === みがわり・特殊消費系 ===
-    case 'substitute':
+    case 'substitute': {
       const subHp = Math.floor(attacker.maxHp / 4);
       if (attacker.currentHp > subHp) {
         applyDamage(attacker, subHp);
@@ -520,7 +484,8 @@ async function applyActionEffect(eff, attacker, defender, target, side, move) {
         addMessage(`${attacker.name}はみがわりを作った！`);
       } else addMessage('体力が足りない！');
       break;
-    case 'cellSplitSub': // さいぼうぶんれつ
+    }
+    case 'cellSplitSub': {
       const splitHp = Math.floor(attacker.maxHp * (eff.value / 100));
       if (attacker.currentHp > splitHp) {
         applyDamage(attacker, splitHp);
@@ -528,22 +493,22 @@ async function applyActionEffect(eff, attacker, defender, target, side, move) {
         addMessage(`${attacker.name}は細胞を分裂させてコピーを作った！`);
       }
       break;
+    }
     case 'selfDamagePercent':
       applyDamage(attacker, Math.floor(attacker.maxHp * (eff.value / 100)));
       addMessage(`${attacker.name}は命を削った！`);
       break;
-    case 'bellyDrum':
+    case 'bellyDrum': {
       const bdHp = Math.floor(attacker.maxHp / 2);
       if (attacker.currentHp > bdHp) {
         applyDamage(attacker, bdHp); attacker.statStages.atk = 6;
         addMessage(`${attacker.name}は体力を削ってパワーを最大まで引き出した！`);
       }
       break;
+    }
     case 'setHp':
       attacker.currentHp = eff.value; addMessage(`${attacker.name}の体力が残りわずかになった！`);
       break;
-
-    // === フィールド・ギミック ===
     case 'clearStatChanges':
       if (target) { target.statStages = { atk:0, def:0, spa:0, spd:0, spe:0, acc:0, eva:0 }; addMessage(`${target.name}の能力変化が元に戻った！`); }
       break;
@@ -573,8 +538,6 @@ async function applyActionEffect(eff, attacker, defender, target, side, move) {
     case 'sideChange':
       addMessage(`${attacker.name}は位置を入れ替えた！`);
       break;
-
-    // === 妨害・強制 ===
     case 'forceSwitch':
       addMessage(`${defender.name}は吹き飛ばされた！`);
       await executeSwitchAction(side === 'player' ? 'enemy' : 'player', -1, true);
@@ -603,8 +566,6 @@ async function applyActionEffect(eff, attacker, defender, target, side, move) {
     case 'countdown':
       defender.flags.countdown = eff.value; addMessage(`${defender.name}に滅びの宣告！あと${eff.value}ターン！`);
       break;
-
-    // === カウンター・入れ替え系 ===
     case 'protect':
       attacker.flags.protect = true; addMessage(`${attacker.name}は守りの態勢に入った！`);
       break;
@@ -620,11 +581,12 @@ async function applyActionEffect(eff, attacker, defender, target, side, move) {
     case 'metalBurst':
       attacker.flags.metalBurst = true; addMessage(`${attacker.name}はメタルバーストの構え！`);
       break;
-    case 'destiny':
+    case 'destiny': {
       const destDmg = Math.min(attacker.currentHp, defender.currentHp);
       applyDamage(attacker, attacker.currentHp); applyDamage(defender, destDmg);
       addMessage(`${attacker.name}は命を懸けて相手を道連れにした！`);
       break;
+    }
     case 'selfDestruct':
       applyDamage(attacker, attacker.currentHp);
       break;
@@ -649,13 +611,15 @@ async function applyActionEffect(eff, attacker, defender, target, side, move) {
     case 'copyStatChanges':
       attacker.statStages = { ...defender.statStages }; addMessage(`${attacker.name}は相手の能力変化をコピーした！`);
       break;
-    case 'swapAtkSpa':
+    case 'swapAtkSpa': {
       const tempAtk = attacker.stats.atk; attacker.stats.atk = attacker.stats.spa; attacker.stats.spa = tempAtk;
       addMessage(`${attacker.name}の攻撃と特攻が入れ替わった！`);
       break;
-    case 'swapItems':
+    }
+    case 'swapItems': {
       const tempItem = attacker.item; attacker.item = defender.item; defender.item = tempItem; addMessage(`お互いの持ち物が入れ替わった！`);
       break;
+    }
     case 'knockOff':
       if (defender.item) { addMessage(`${defender.name}の${defender.item}をはたき落とした！`); defender.item = null; }
       break;
@@ -678,16 +642,18 @@ async function applyActionEffect(eff, attacker, defender, target, side, move) {
       if (Math.random() < 0.5) addMessage('コイントス：表！大ダメージ！');
       else { addMessage('コイントス：裏！自分にダメージ！'); applyDamage(attacker, eff.missDamage); }
       break;
-    case 'randomSecondary':
+    case 'randomSecondary': {
       const r = Math.random();
       if (r < 0.2) applyStatChange(defender, 'def', -1, attacker.name);
       else if (r < 0.4) inflictStatus(defender, 'par', attacker.name);
       else if (r < 0.6) inflictStatus(defender, 'brn', attacker.name);
       else if (r < 0.8) inflictConfusion(defender);
       break;
-    case 'randomStatChange':
+    }
+    case 'randomStatChange': {
       const sArr = ['atk','def','spa','spd','spe']; applyStatChange(defender, sArr[Math.floor(Math.random()*5)], eff.stage, attacker.name);
       break;
+    }
     case 'contactDamage':
       applyDamage(defender, eff.value);
       break;
@@ -864,13 +830,16 @@ async function handleFaint(side) {
   const mon = side === 'player' ? Battle.playerMon : Battle.enemyMon;
   addMessage(`${mon.name}はたおれた！`);
   mon.currentHp = 0;
-  animateFaint(side);
+  if (typeof animateFaint === 'function') animateFaint(side);
 
   if (side === 'enemy') {
     const exp = Math.floor(mon.level * 1.5 * 50 / 7);
     Battle.playerMon.exp += exp;
     addMessage(`${Battle.playerMon.name}は${exp}の経験値を手に入れた！`);
-    endBattle('win'); // 単体想定。パーティ戦闘を実装する場合はここで交代UI表示処理へ
+    
+    // パーティ戦の場合は次のモンスターを出す処理がここに入りますが、
+    // 現状は単体勝ち抜きとして勝利判定
+    endBattle('win'); 
   } else {
     endBattle('lose');
   }
@@ -949,51 +918,5 @@ function triggerAbilityOnMiss(mon, battle) {
   if (ABILITIES[mon.ability]?.missDrain8) {
     const opp = mon === battle.playerMon ? battle.playerMon : battle.enemyMon;
     if (opp) { applyDamage(opp, Math.floor(opp.maxHp / 8)); addMessage(`${mon.name}のムジュラののろいで追加ダメージ！`); }
-  }
-}
-
-function addMessage(msg) {
-  if (!msg) return;
-  Battle.messageQueue.push(msg);
-  if (Battle.onMessage) Battle.onMessage(msg);
-}
-
-// UIアニメーションの空フック
-function animateAttack(side) { }
-function animateDamage(side) { }
-function animateFaint(side) { }
-
-// =====================================================
-// メッセージ管理
-// =====================================================
-function addMessage(msg) {
-  if (!msg) return;
-  Battle.messageQueue.push(msg);
-  if (Battle.onMessage) Battle.onMessage(msg);
-}
-
-// =====================================================
-// アニメーション
-// =====================================================
-function animateAttack(side) {
-  const el = document.getElementById(side === 'player' ? 'player-sprite' : 'enemy-sprite');
-  if (el) {
-    el.classList.add('attacking');
-    setTimeout(() => el.classList.remove('attacking'), 400);
-  }
-}
-
-function animateDamage(side) {
-  const el = document.getElementById(side === 'player' ? 'player-sprite' : 'enemy-sprite');
-  if (el) {
-    el.classList.add('taking-damage');
-    setTimeout(() => el.classList.remove('taking-damage'), 400);
-  }
-}
-
-function animateFaint(side) {
-  const el = document.getElementById(side === 'player' ? 'player-sprite' : 'enemy-sprite');
-  if (el) {
-    el.classList.add('fainting');
   }
 }
