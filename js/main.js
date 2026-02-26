@@ -3,6 +3,26 @@
 // =====================================================
 
 document.addEventListener('DOMContentLoaded', () => {
+  function checkSystemStatus() {
+    const statusEl = document.getElementById('system-status');
+    if (!statusEl) return;
+    
+    let errors = [];
+    if (typeof TYPES === 'undefined') errors.push('タイプ(types.js)');
+    if (typeof ABILITIES === 'undefined') errors.push('特性(abilities.js)');
+    if (typeof MOVES === 'undefined') errors.push('技(moves.js)');
+    if (typeof ITEMS === 'undefined') errors.push('アイテム(items.js)');
+    if (typeof PUYUMON_DATA === 'undefined') errors.push('キャラ(characters.js)');
+    
+    if (errors.length > 0) {
+      statusEl.innerHTML = `<span style="color: #ff6666; font-weight: bold; text-shadow: 1px 1px 2px #000;">⚠️ エラー: 以下のデータが未読み込みです<br>${errors.join(', ')}</span>`;
+      console.error('読み込みエラー:', errors);
+    } else {
+      statusEl.innerHTML = `<span style="color: #66ff66; text-shadow: 1px 1px 2px #000;">✅ 全データ正常に読み込み完了</span>`;
+    }
+  }
+  // システムチェックを実行
+  checkSystemStatus();
   // ローディング表示
   const loading = document.getElementById('loading');
 
