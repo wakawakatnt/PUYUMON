@@ -4498,8 +4498,8 @@ const PUYUMON_DATA = {
   'ninniku': {
     id: 135,
     name: 'にんにくぷゆゆ',
-    icon: '🧄\n🥺',
-    desc: 'にんにくの臭気を放つぷゆモン。臭いで相手を弱らせる。ぷ湯婆婆の使い魔。',
+    icon: '🧄',
+    desc: 'にんにくの臭気を放つぷゆモン。臭いで相手を弱らせる。ぷ湯婆婆の使い魔。AIが勝手に追加したので詳細不明',
     types: ['くさ', 'どく'],
     baseStats: { hp: 56, atk: 42, def: 48, spa: 58, spd: 52, spe: 40 },
     abilities: ['もうどくのき'],
