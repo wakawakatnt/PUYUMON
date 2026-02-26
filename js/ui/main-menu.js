@@ -337,6 +337,15 @@ function setupTitleEvents() {
       return;
     }
     initNewGame(name);
+     if (Game.party.length === 0 && typeof PUYUMON_DATA !== 'undefined') {
+      if (PUYUMON_DATA['puyuyu']) {
+        const fallbackMon = createPuyuMon('puyuyu', 5);
+        if (fallbackMon) {
+          fallbackMon.currentHp = fallbackMon.maxHp;
+          addToParty(fallbackMon);
+        }
+      }
+    }
     showScreen('main');
     updateMainMenu();
     // スターター選択メッセージ
