@@ -2126,7 +2126,7 @@ const PUYUMON_DATA = {
   'kingpuyu': {
     id: 62,
     name: 'キングぷゆゆ',
-    icon: '👑\n🥺',
+    icon: '👑<br>🥺',
     desc: '御徒町の王と呼ばれるぷゆモンの頂点。王冠を戴くその姿は威厳に満ちている。全てのぷゆモンを統べる力を持つ。',
     types: ['ぷゆ', 'ドラゴン'],
     baseStats: { hp: 89, atk: 85, def: 76, spa: 87, spd: 78, spe: 87 },
@@ -2169,7 +2169,7 @@ const PUYUMON_DATA = {
   'queenpuyu': {
     id: 63,
     name: 'クイーンぷゆゆ',
-    icon: '👑\n🥹',
+    icon: '👑<br>🥹',
     desc: 'ぷゆモン界の女王。慈愛と威厳を兼ね備え、全てを癒しながら全てを裁く。キングぷゆゆの対。',
     types: ['ぷゆ', 'フェアリー'],
     baseStats: { hp: 84, atk: 52, def: 71, spa: 96, spd: 92, spe: 103 },
@@ -3647,7 +3647,7 @@ const PUYUMON_DATA = {
   'penguin': {
     id: 109,
     name: 'ペンギンぷゆゆ',
-    icon: '🎩\n🧐',
+    icon: '🎩<br>🧐',
     desc: '博士帽を被ったペンギン型ぷゆモン。知性と冷気を兼ね備えた学者肌。氷上を高速で滑走する。',
     types: ['こおり', 'みず'],
     baseStats: { hp: 63, atk: 47, def: 56, spa: 72, spd: 61, spe: 43 },
@@ -3872,7 +3872,7 @@ const PUYUMON_DATA = {
   'puyubaba': {
     id: 116,
     name: 'ぷ湯婆婆',
-    icon: '🧄\n🥺',
+    icon: '🧄<br>🥺',
     desc: '湯屋を支配する老婆のぷゆモン。強力な呪文を操り、相手の持ち物を奪い取る。',
     types: ['げんそう', 'ほのお'],
     baseStats: { hp: 68, atk: 39, def: 56, spa: 84, spd: 69, spe: 50 },
@@ -3905,7 +3905,7 @@ const PUYUMON_DATA = {
   'chiiba': {
     id: 117,
     name: '钱婆',
-    icon: '🧄\n🤓',
+    icon: '🧄<br>🤓',
     desc: 'ぷ湯婆婆の双子の姉妹。穏やかな性格で味方を癒す。状態異常を治す力に長ける。',
     types: ['げんそう', 'フェアリー'],
     baseStats: { hp: 74, atk: 26, def: 59, spa: 66, spd: 82, spe: 49 },
@@ -4247,7 +4247,7 @@ const PUYUMON_DATA = {
   'fantast': {
     id: 127,
     name: 'ぴえんなファンタスト',
-    icon: '🐴\n🥺',
+    icon: '🐴<br>🥺',
     desc: '泣き顔の馬型ぷゆモン。いななきで自分を強化し相手を弱らせる。蹄の攻撃は強烈。',
     types: ['じめん', 'ノーマル'],
     baseStats: { hp: 63, atk: 71, def: 54, spa: 48, spd: 46, spe: 56 },
