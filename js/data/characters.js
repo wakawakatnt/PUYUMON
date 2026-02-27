@@ -4279,7 +4279,7 @@ const PUYUMON_DATA = {
   'tetsuko': {
     id: 128,
     name: '徹子ぷゆゆ',
-    icon: '🌰\n🥺',
+    icon: '🌰<br>🥺',
     desc: '栗のような丸い頭のぷゆモン。部屋を作って味方を癒す。穏やかで包容力がある。',
     types: ['ノーマル', 'フェアリー'],
     baseStats: { hp: 74, atk: 36, def: 53, spa: 56, spd: 67, spe: 36 },
